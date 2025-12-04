@@ -34,6 +34,18 @@ body {
     display: flex;
     flex-direction: column;
     width: 100%;
+    transition: opacity 0.3s, filter 0.3s, box-shadow 0.3s;
+}
+
+.opponent-side.passed, .player-side.passed {
+    opacity: 0.6;
+    filter: grayscale(0.8);
+    pointer-events: none; /* Prevent interaction */
+}
+
+.opponent-side.active-turn, .player-side.active-turn {
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1);
+    z-index: 1; /* Ensure shadow is visible */
 }
 
 /* --- Rows --- */
@@ -91,21 +103,51 @@ body {
 
 /* Weather Effects */
 .weather-active-frost {
-    background-color: rgba(135, 206, 250, 0.2) !important;
-    box-shadow: inset 0 0 20px rgba(135, 206, 250, 0.5);
+    background-color: rgba(135, 206, 250, 0.3) !important;
+    box-shadow: inset 0 0 30px rgba(135, 206, 250, 0.8);
     border-color: #3498db;
+    position: relative;
+}
+.weather-active-frost::after {
+    content: "❄️";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 2rem;
+    opacity: 0.5;
 }
 
 .weather-active-fog {
-    background-color: rgba(189, 195, 199, 0.2) !important;
-    box-shadow: inset 0 0 20px rgba(189, 195, 199, 0.5);
+    background-color: rgba(189, 195, 199, 0.3) !important;
+    box-shadow: inset 0 0 30px rgba(189, 195, 199, 0.8);
     border-color: #95a5a6;
+    position: relative;
+}
+.weather-active-fog::after {
+    content: "🌫️";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 2rem;
+    opacity: 0.5;
 }
 
 .weather-active-rain {
-    background-color: rgba(41, 128, 185, 0.2) !important;
-    box-shadow: inset 0 0 20px rgba(41, 128, 185, 0.5);
+    background-color: rgba(41, 128, 185, 0.3) !important;
+    box-shadow: inset 0 0 30px rgba(41, 128, 185, 0.8);
     border-color: #2980b9;
+    position: relative;
+}
+.weather-active-rain::after {
+    content: "🌧️";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 2rem;
+    opacity: 0.5;
 }
 
 /* Opponent specific styling (optional, maybe darker) */
@@ -226,6 +268,34 @@ body {
     opacity: 0.7;
 }
 
+/* --- Animations --- */
+@keyframes placeCard {
+    0% {
+        transform: scale(1.2) translateY(20px);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes burn {
+    0% { transform: translate(1px, 1px) rotate(0deg); filter: brightness(1) sepia(0) saturate(1) hue-rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); filter: brightness(0.8) sepia(1) saturate(5) hue-rotate(-50deg); } /* Reddish */
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); opacity: 1; }
+    100% { transform: translate(0, 0) rotate(0deg); opacity: 0; filter: brightness(0) sepia(1) saturate(5) hue-rotate(-50deg); }
+}
+
+@keyframes heroPulse {
+    0% { box-shadow: 0 0 5px #f1c40f; }
+    50% { box-shadow: 0 0 20px #f1c40f, 0 0 10px #fff; }
+    100% { box-shadow: 0 0 5px #f1c40f; }
+}
+
 /* --- Card Placeholder Styling --- */
 .card {
     width: 80px;
@@ -237,15 +307,21 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    cursor: pointer;
+    cursor: grab; /* Default cursor */
     user-select: none;
     transition: transform 0.2s;
     position: relative;
+    animation: placeCard 0.3s ease-out; /* Entry animation */
+}
+
+.card:active {
+    cursor: grabbing;
 }
 
 .card:hover {
     transform: translateY(-10px);
     border-color: #fff;
+    z-index: 10; /* Bring to front on hover */
 }
 
 .card-power {
@@ -294,7 +370,7 @@ body {
 
 .card.hero-card {
     border: 3px solid #f1c40f; /* Gold border */
-    box-shadow: 0 0 10px #f1c40f;
+    animation: placeCard 0.3s ease-out, heroPulse 2s infinite; /* Combine animations */
 }
 
 .card.hero-card .card-power {
@@ -303,6 +379,11 @@ body {
 }
 
 /* Scorch Effect */
+.card.burning {
+    animation: burn 0.8s forwards; /* Play burn animation */
+}
+
+/* Legacy support if needed, or remove */
 .card.scorched {
     transition: all 0.5s ease;
     transform: scale(0.8);

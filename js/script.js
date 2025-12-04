@@ -131,6 +131,7 @@ function initializeGame() {
     
     updateScore();
     updateEnemyHandUI();
+    updateTurnVisuals();
 }
 
 function updateEnemyHandUI() {
@@ -151,6 +152,10 @@ function setupControls() {
             passBtn.textContent = "Passado";
             console.log("Jogador passou a vez.");
             
+            // Visual update
+            document.querySelector('.player-side').classList.add('passed');
+            updateTurnVisuals();
+
             // If player passes, enemy plays until they win or pass
             if (!enemyPassed) {
                 enemyTurnLoop();
@@ -447,8 +452,8 @@ function applyScorch(cardElement, currentRow) {
         console.log(`Scorch ativado! Destruindo ${targets.length} cartas com força ${maxPower}.`);
         
         targets.forEach(card => {
-            card.classList.add('scorched');
-            // Remove after animation
+            card.classList.add('burning'); // Use new animation class
+            // Remove after animation (0.8s defined in CSS)
             setTimeout(() => {
                 // Add to graveyard before removing
                 const cardObj = {
@@ -470,7 +475,7 @@ function applyScorch(cardElement, currentRow) {
                     card.parentNode.removeChild(card);
                 }
                 updateScore();
-            }, 500);
+            }, 800); // Wait for animation
         });
     }
 }
@@ -624,7 +629,25 @@ function enemyTurn() {
 function passTurn(who) {
     if (who === 'opponent') {
         enemyPassed = true;
+        document.querySelector('.opponent-side').classList.add('passed');
+        updateTurnVisuals();
         checkEndRound();
+    }
+}
+
+function updateTurnVisuals() {
+    const playerSide = document.querySelector('.player-side');
+    const opponentSide = document.querySelector('.opponent-side');
+    
+    if (!playerSide || !opponentSide) return;
+
+    playerSide.classList.remove('active-turn');
+    opponentSide.classList.remove('active-turn');
+
+    if (isProcessingTurn && !enemyPassed) {
+        opponentSide.classList.add('active-turn');
+    } else if (!playerPassed) {
+        playerSide.classList.add('active-turn');
     }
 }
 
@@ -632,12 +655,15 @@ function enemyTurnLoop() {
     if (enemyPassed) return;
 
     isProcessingTurn = true;
+    updateTurnVisuals();
+
     setTimeout(() => {
         enemyTurn();
         if (!enemyPassed && playerPassed) {
             enemyTurnLoop(); // Continue playing if player passed
         } else {
             isProcessingTurn = false;
+            updateTurnVisuals();
         }
     }, 1500);
 }
@@ -742,6 +768,10 @@ function prepareNextRound() {
     playerPassed = false;
     enemyPassed = false;
     isProcessingTurn = false;
+    document.querySelector('.player-side').classList.remove('passed');
+    document.querySelector('.opponent-side').classList.remove('passed');
+    updateTurnVisuals();
+
     activeWeather = { frost: false, fog: false, rain: false };
     updateWeatherVisuals();
 
@@ -844,9 +874,11 @@ function drop(e) {
                 // Trigger Enemy Turn
                 if (!enemyPassed) {
                     isProcessingTurn = true;
+                    updateTurnVisuals();
                     setTimeout(() => {
                         enemyTurn();
                         isProcessingTurn = false;
+                        updateTurnVisuals();
                     }, 1500);
                 }
             } else {
@@ -867,9 +899,11 @@ function drop(e) {
                 // Trigger Enemy Turn
                 if (!enemyPassed) {
                     isProcessingTurn = true;
+                    updateTurnVisuals();
                     setTimeout(() => {
                         enemyTurn();
                         isProcessingTurn = false;
+                        updateTurnVisuals();
                     }, 1500);
                 }
             }
