@@ -80,6 +80,25 @@ const cardDatabase = [
     power: 0,
     img: "assets/sun.png",
     ability: "weather_clear"
+  },
+  // --- TIPO: HERO (Teste) ---
+  {
+    id: "h_geralt",
+    name: "Geralt de Rívia",
+    type: "melee",
+    power: 15,
+    img: "assets/geralt.png",
+    ability: "none",
+    isHero: true
+  },
+  {
+    id: "h_ciri",
+    name: "Ciri",
+    type: "melee",
+    power: 15,
+    img: "assets/ciri.png",
+    ability: "none",
+    isHero: true
   }
 ];
 
@@ -164,6 +183,11 @@ function createCardElement(card) {
     el.dataset.basePower = card.power; // Original power for resets/calculations
     el.dataset.name = card.name;
     el.dataset.ability = card.ability || "none";
+    el.dataset.isHero = card.isHero || "false";
+
+    if (card.isHero) {
+        el.classList.add('hero-card');
+    }
 
     // Power Badge
     const power = document.createElement('div');
@@ -285,9 +309,21 @@ function applyMedic(cardElement, currentRow) {
         return;
     }
 
-    // Simple Logic: Revive the last card added (LIFO)
-    // In a real game, we would filter out heroes or special cards if needed
-    const cardToRevive = graveyard.pop();
+    // Find the last non-hero card to revive (LIFO)
+    let cardIndex = -1;
+    for (let i = graveyard.length - 1; i >= 0; i--) {
+        if (!graveyard[i].isHero) {
+            cardIndex = i;
+            break;
+        }
+    }
+
+    if (cardIndex === -1) {
+        console.log("Nenhuma carta válida (não-herói) para reviver.");
+        return;
+    }
+
+    const cardToRevive = graveyard.splice(cardIndex, 1)[0];
     
     console.log(`Médico ativado! Revivendo: ${cardToRevive.name}`);
 
@@ -387,9 +423,17 @@ function applyScorch(cardElement, currentRow) {
     const enemyCards = Array.from(targetContainer.querySelectorAll('.card'));
     if (enemyCards.length === 0) return;
 
-    // Find Max Power
+    // Filter out Heroes (Immune to Scorch)
+    const vulnerableCards = enemyCards.filter(card => card.dataset.isHero !== "true");
+
+    if (vulnerableCards.length === 0) {
+        console.log("Scorch falhou: Apenas heróis na fileira.");
+        return;
+    }
+
+    // Find Max Power among vulnerable cards
     let maxPower = -1;
-    enemyCards.forEach(card => {
+    vulnerableCards.forEach(card => {
         const power = parseInt(card.dataset.power);
         if (power > maxPower) {
             maxPower = power;
@@ -397,7 +441,7 @@ function applyScorch(cardElement, currentRow) {
     });
 
     // Identify targets (only if maxPower > 0)
-    const targets = enemyCards.filter(card => parseInt(card.dataset.power) === maxPower);
+    const targets = vulnerableCards.filter(card => parseInt(card.dataset.power) === maxPower);
 
     if (targets.length > 0) {
         console.log(`Scorch ativado! Destruindo ${targets.length} cartas com força ${maxPower}.`);
@@ -412,7 +456,8 @@ function applyScorch(cardElement, currentRow) {
                     name: card.dataset.name,
                     type: card.dataset.type,
                     power: parseInt(card.dataset.basePower),
-                    ability: card.dataset.ability
+                    ability: card.dataset.ability,
+                    isHero: card.dataset.isHero === "true"
                 };
                 
                 if (card.closest('.opponent-side')) {
@@ -462,15 +507,19 @@ function updateScore() {
             let power = parseInt(card.dataset.basePower);
             const name = card.dataset.name;
             const ability = card.dataset.ability;
+            const isHero = card.dataset.isHero === "true";
 
-            // Apply Weather
-            if (isWeathered) {
+            // Apply Weather (Heroes are immune)
+            if (isWeathered && !isHero) {
                 power = 1;
             }
 
             // Apply Tight Bond
             // Only if the card HAS the tight_bond ability AND there are others
-            if (ability === 'tight_bond' && nameCounts[name] > 1) {
+            // Heroes usually don't bond, but if they did, they might be immune to buffs too?
+            // Classic Gwent: Heroes don't get buffed by Horns/Bonds.
+            // Let's assume Heroes are immune to ALL modifications (positive or negative).
+            if (!isHero && ability === 'tight_bond' && nameCounts[name] > 1) {
                 power *= 2;
             }
 
@@ -668,7 +717,8 @@ function prepareNextRound() {
                 name: card.dataset.name,
                 type: card.dataset.type,
                 power: parseInt(card.dataset.basePower),
-                ability: card.dataset.ability
+                ability: card.dataset.ability,
+                isHero: card.dataset.isHero === "true"
             };
 
             // Determine owner based on row class (simplified logic)
@@ -781,7 +831,8 @@ function drop(e) {
                     name: card.dataset.name,
                     type: card.dataset.type,
                     power: parseInt(card.dataset.basePower),
-                    ability: card.dataset.ability
+                    ability: card.dataset.ability,
+                    isHero: card.dataset.isHero === "true"
                 };
                 playerGraveyard.push(cardObj);
                 

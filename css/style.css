@@ -292,6 +292,16 @@ body {
     box-shadow: 0 0 5px #8e44ad;
 }
 
+.card.hero-card {
+    border: 3px solid #f1c40f; /* Gold border */
+    box-shadow: 0 0 10px #f1c40f;
+}
+
+.card.hero-card .card-power {
+    border-color: #fff;
+    background: #b8860b; /* Dark Goldenrod */
+}
+
 /* Scorch Effect */
 .card.scorched {
     transition: all 0.5s ease;
