@@ -102,13 +102,13 @@ body {
 }
 
 /* Weather Effects */
-.weather-active-frost {
+.weather-active-frost, .weather-frost {
     background-color: rgba(135, 206, 250, 0.3) !important;
     box-shadow: inset 0 0 30px rgba(135, 206, 250, 0.8);
     border-color: #3498db;
     position: relative;
 }
-.weather-active-frost::after {
+.weather-active-frost::after, .weather-frost::after {
     content: "❄️";
     position: absolute;
     right: 10px;
@@ -118,13 +118,13 @@ body {
     opacity: 0.5;
 }
 
-.weather-active-fog {
+.weather-active-fog, .weather-fog {
     background-color: rgba(189, 195, 199, 0.3) !important;
     box-shadow: inset 0 0 30px rgba(189, 195, 199, 0.8);
     border-color: #95a5a6;
     position: relative;
 }
-.weather-active-fog::after {
+.weather-active-fog::after, .weather-fog::after {
     content: "🌫️";
     position: absolute;
     right: 10px;
@@ -134,13 +134,13 @@ body {
     opacity: 0.5;
 }
 
-.weather-active-rain {
+.weather-active-rain, .weather-rain {
     background-color: rgba(41, 128, 185, 0.3) !important;
     box-shadow: inset 0 0 30px rgba(41, 128, 185, 0.8);
     border-color: #2980b9;
     position: relative;
 }
-.weather-active-rain::after {
+.weather-active-rain::after, .weather-rain::after {
     content: "🌧️";
     position: absolute;
     right: 10px;
@@ -269,6 +269,31 @@ body {
 }
 
 /* --- Animations --- */
+@keyframes drawCard {
+    0% { transform: translateY(100px) scale(0.5); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes playCard {
+    0% { transform: scale(1.2); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
 @keyframes placeCard {
     0% {
         transform: scale(1.2) translateY(20px);
@@ -311,7 +336,12 @@ body {
     user-select: none;
     transition: transform 0.2s;
     position: relative;
-    animation: placeCard 0.3s ease-out; /* Entry animation */
+    animation: drawCard 0.5s ease-out; /* Default entry for hand */
+}
+
+/* When played on board, override animation */
+.cards-container .card {
+    animation: playCard 0.3s ease-out;
 }
 
 .card:active {

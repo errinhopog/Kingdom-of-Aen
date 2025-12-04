@@ -4,6 +4,7 @@ const cardDatabase = [
     id: "m1",
     name: "Infantaria de Temeria",
     type: "melee",
+    kind: "unit",
     power: 4,
     img: "assets/infantry.png",
     ability: "tight_bond"
@@ -14,6 +15,7 @@ const cardDatabase = [
     id: "r1",
     name: "Arqueiro Nilfgaardiano",
     type: "ranged",
+    kind: "unit",
     power: 6,
     img: "assets/archer.png",
     ability: "none"
@@ -24,6 +26,7 @@ const cardDatabase = [
     id: "s1",
     name: "Balista Pesada",
     type: "siege",
+    kind: "unit",
     power: 8,
     img: "assets/ballista.png",
     description: "Artilharia pesada.",
@@ -33,6 +36,7 @@ const cardDatabase = [
     id: "s2",
     name: "Torre de Cerco",
     type: "siege",
+    kind: "unit",
     power: 6,
     img: "assets/tower.png",
     ability: "none"
@@ -42,17 +46,29 @@ const cardDatabase = [
     id: "spy1",
     name: "Espião de Dijkstra",
     type: "melee",
+    kind: "unit",
     power: 7,
     img: "assets/spy.png",
     ability: "spy"
   },
-  // --- TIPO: SCORCH (Teste) ---
+  // --- TIPO: SCORCH (Unit - Dragon) ---
   {
     id: "sc1",
     name: "Villentretenmerth",
     type: "melee",
+    kind: "special",
     power: 7,
     img: "assets/dragon.png",
+    ability: "scorch"
+  },
+  // --- TIPO: SCORCH (Special - Spell) ---
+  {
+    id: "spell_scorch_melee",
+    name: "Queimar (Melee)",
+    type: "melee",
+    kind: "special",
+    power: 0,
+    img: "assets/scorch.png",
     ability: "scorch"
   },
   // --- TIPO: MEDIC (Teste) ---
@@ -60,6 +76,7 @@ const cardDatabase = [
     id: "med1",
     name: "Médica de Campo",
     type: "siege",
+    kind: "unit",
     power: 1,
     img: "assets/medic.png",
     ability: "medic"
@@ -69,6 +86,7 @@ const cardDatabase = [
     id: "w_frost",
     name: "Geada Mordaz",
     type: "weather",
+    kind: "special",
     power: 0,
     img: "assets/frost.png",
     ability: "weather_frost"
@@ -77,6 +95,7 @@ const cardDatabase = [
     id: "w_clear",
     name: "Luz do Dia",
     type: "weather",
+    kind: "special",
     power: 0,
     img: "assets/sun.png",
     ability: "weather_clear"
@@ -86,6 +105,7 @@ const cardDatabase = [
     id: "h_geralt",
     name: "Geralt de Rívia",
     type: "melee",
+    kind: "unit",
     power: 15,
     img: "assets/geralt.png",
     ability: "none",
@@ -95,6 +115,7 @@ const cardDatabase = [
     id: "h_ciri",
     name: "Ciri",
     type: "melee",
+    kind: "unit",
     power: 15,
     img: "assets/ciri.png",
     ability: "none",
@@ -184,6 +205,7 @@ function createCardElement(card) {
     el.draggable = true; // Enable native drag
     el.dataset.id = card.id;
     el.dataset.type = card.type;
+    el.dataset.kind = card.kind || "unit"; // Default to unit
     el.dataset.power = card.power; // Current power
     el.dataset.basePower = card.power; // Original power for resets/calculations
     el.dataset.name = card.name;
@@ -386,11 +408,11 @@ function applySpy(cardElement, currentRow) {
         
         console.log(`Espião ativado! Carta movida para ${targetSideClass}.`);
 
-        // Draw 2 cards for the person who played the spy
+        // Draw 1 card for the person who played the spy (Nerfed from 2)
         if (isPlayerSide) {
-            drawCard('player', 2);
+            drawCard('player', 1);
         } else {
-            drawCard('opponent', 2);
+            drawCard('opponent', 1);
         }
     }
 }
@@ -895,6 +917,27 @@ function drop(e) {
 
                 // Update Score
                 updateScore();
+
+                // Handle Special Cards (Spells) - Remove after use
+                if (card.dataset.kind === 'special') {
+                    setTimeout(() => {
+                        // Move to graveyard
+                        const cardObj = {
+                            id: card.dataset.id,
+                            name: card.dataset.name,
+                            type: card.dataset.type,
+                            kind: card.dataset.kind,
+                            power: parseInt(card.dataset.basePower),
+                            ability: card.dataset.ability,
+                            isHero: card.dataset.isHero === "true"
+                        };
+                        playerGraveyard.push(cardObj);
+                        
+                        // Remove from board
+                        card.remove();
+                        updateScore(); // Update again after removal
+                    }, 1000); // Wait for animation/effect
+                }
 
                 // Trigger Enemy Turn
                 if (!enemyPassed) {
