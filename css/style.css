@@ -1,0 +1,304 @@
+:root {
+    --bg-board: #2c2c2c;
+    --bg-row-melee: #4a2c2c;
+    --bg-row-ranged: #2c4a2c;
+    --bg-row-siege: #2c2c4a;
+    --border-color: #555;
+    --text-color: #eee;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1a1a1a;
+    color: var(--text-color);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+/* --- Board Sides --- */
+.opponent-side, .player-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+/* --- Rows --- */
+.row {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+    padding: 0 20px;
+}
+
+.row-label {
+    width: 150px;
+    font-weight: bold;
+    opacity: 0.7;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+.cards-container {
+    flex: 1;
+    display: flex;
+    gap: 10px;
+    padding: 5px;
+    height: 100%;
+    align-items: center;
+}
+
+.row-score {
+    width: 50px;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    background: rgba(0,0,0,0.3);
+    padding: 5px;
+    border-radius: 5px;
+}
+
+/* Row Types Colors */
+.row.melee {
+    background-color: var(--bg-row-melee);
+    border-left: 5px solid #e74c3c; /* Red for Melee */
+}
+
+.row.ranged {
+    background-color: var(--bg-row-ranged);
+    border-left: 5px solid #2ecc71; /* Green for Ranged */
+}
+
+.row.siege {
+    background-color: var(--bg-row-siege);
+    border-left: 5px solid #3498db; /* Blue for Siege */
+}
+
+/* Opponent specific styling (optional, maybe darker) */
+.opponent-side .row {
+    opacity: 0.9;
+}
+
+/* --- Divider --- */
+.field-divider {
+    height: 4px;
+    background-color: #000;
+    width: 100%;
+    box-shadow: 0 0 10px rgba(0,0,0,0.8);
+    z-index: 10;
+}
+
+/* --- Controls Area --- */
+.controls-area {
+    height: 200px; /* Fixed height for hand and scoreboard */
+    background-color: #111;
+    border-top: 2px solid #444;
+    display: flex;
+    flex-direction: row;
+}
+
+.player-hand {
+    flex: 3;
+    padding: 10px;
+    border-right: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+}
+
+.hand-label {
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    color: #aaa;
+}
+
+.hand-cards {
+    flex: 1;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    overflow-x: auto;
+}
+
+.scoreboard {
+    flex: 1;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #222;
+}
+
+.score-title {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: #f1c40f; /* Gold */
+}
+
+.score-details {
+    width: 100%;
+}
+
+.score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    padding: 5px;
+    background: #333;
+    border-radius: 4px;
+}
+
+.gems-container {
+    display: flex;
+    gap: 5px;
+}
+
+.gem {
+    width: 12px;
+    height: 12px;
+    background-color: #555;
+    border-radius: 50%;
+    border: 1px solid #777;
+    box-shadow: inset 0 0 2px #000;
+}
+
+.gem.active {
+    background-color: #e74c3c; /* Red gem for win/life */
+    border-color: #c0392b;
+    box-shadow: 0 0 5px #e74c3c;
+}
+
+.pass-btn {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background 0.3s;
+}
+
+.pass-btn:hover {
+    background-color: #c0392b;
+}
+
+.pass-btn:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* --- Card Placeholder Styling --- */
+.card {
+    width: 80px;
+    height: 110px;
+    background-color: #444;
+    border: 2px solid #777;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s;
+    position: relative;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    border-color: #fff;
+}
+
+.card-power {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: #000;
+    color: #fff;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+    border: 1px solid #f1c40f;
+    z-index: 2;
+}
+
+.card-power.buffed {
+    color: #2ecc71; /* Green text for buffed power */
+    border-color: #2ecc71;
+    font-weight: 900;
+}
+
+.card-ability-icon {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    color: #f1c40f;
+    font-size: 0.8rem;
+    z-index: 2;
+}
+
+.card.spy-card {
+    border-color: #9b59b6; /* Purple border for spies */
+    box-shadow: 0 0 5px #8e44ad;
+}
+
+/* Scorch Effect */
+.card.scorched {
+    transition: all 0.5s ease;
+    transform: scale(0.8);
+    opacity: 0;
+    background-color: #e74c3c; /* Red flash */
+    border-color: #c0392b;
+    box-shadow: 0 0 15px #e74c3c;
+}
+
+.card-name {
+    font-size: 0.7rem;
+    text-align: center;
+    padding: 2px;
+}
+
+.card-img {
+    width: 100%;
+    height: 60%;
+    background-color: #555; /* Placeholder for image */
+    margin-bottom: 5px;
+}
+
+/* --- Drag and Drop Visuals --- */
+.card.dragging {
+    opacity: 0.5;
+    border: 2px dashed #fff;
+    transform: scale(1.05);
+}
+
+.row.drag-over {
+    background-color: rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 0 15px rgba(241, 196, 15, 0.5); /* Gold glow */
+    border-color: #f1c40f;
+}
