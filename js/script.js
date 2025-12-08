@@ -1,127 +1,4 @@
-const cardDatabase = [
-  // --- TIPO: MELEE (Curta) ---
-  {
-    id: "m1",
-    name: "Infantaria de Temeria",
-    type: "melee",
-    kind: "unit",
-    power: 4,
-    img: "assets/infantry.png",
-    ability: "tight_bond"
-  },
-  
-  // --- TIPO: RANGED (Média) ---
-  {
-    id: "r1",
-    name: "Arqueiro Nilfgaardiano",
-    type: "ranged",
-    kind: "unit",
-    power: 6,
-    img: "assets/archer.png",
-    ability: "none"
-  },
-
-  // --- TIPO: SIEGE (Longa) ---
-  {
-    id: "s1",
-    name: "Balista Pesada",
-    type: "siege",
-    kind: "unit",
-    power: 8,
-    img: "assets/ballista.png",
-    description: "Artilharia pesada.",
-    ability: "none"
-  },
-  {
-    id: "s2",
-    name: "Torre de Cerco",
-    type: "siege",
-    kind: "unit",
-    power: 6,
-    img: "assets/tower.png",
-    ability: "none"
-  },
-  // --- TIPO: SPY (Teste) ---
-  {
-    id: "spy1",
-    name: "Espião de Dijkstra",
-    type: "melee",
-    kind: "unit",
-    power: 7,
-    img: "assets/spy.png",
-    ability: "spy"
-  },
-  // --- TIPO: SCORCH (Unit - Dragon) ---
-  {
-    id: "sc1",
-    name: "Villentretenmerth",
-    type: "melee",
-    kind: "special",
-    power: 7,
-    img: "assets/dragon.png",
-    ability: "scorch"
-  },
-  // --- TIPO: SCORCH (Special - Spell) ---
-  {
-    id: "spell_scorch_melee",
-    name: "Queimar (Melee)",
-    type: "melee",
-    kind: "special",
-    power: 0,
-    img: "assets/scorch.png",
-    ability: "scorch"
-  },
-  // --- TIPO: MEDIC (Teste) ---
-  {
-    id: "med1",
-    name: "Médica de Campo",
-    type: "siege",
-    kind: "unit",
-    power: 1,
-    img: "assets/medic.png",
-    ability: "medic"
-  },
-  // --- TIPO: WEATHER (Teste) ---
-  {
-    id: "w_frost",
-    name: "Geada Mordaz",
-    type: "weather",
-    kind: "special",
-    power: 0,
-    img: "assets/frost.png",
-    ability: "weather_frost"
-  },
-  {
-    id: "w_clear",
-    name: "Luz do Dia",
-    type: "weather",
-    kind: "special",
-    power: 0,
-    img: "assets/sun.png",
-    ability: "weather_clear"
-  },
-  // --- TIPO: HERO (Teste) ---
-  {
-    id: "h_geralt",
-    name: "Geralt de Rívia",
-    type: "melee",
-    kind: "unit",
-    power: 15,
-    img: "assets/geralt.png",
-    ability: "none",
-    isHero: true
-  },
-  {
-    id: "h_ciri",
-    name: "Ciri",
-    type: "melee",
-    kind: "unit",
-    power: 15,
-    img: "assets/ciri.png",
-    ability: "none",
-    isHero: true
-  }
-];
+// cardDatabase is now loaded from cards.js as allCardsData
 
 // Game State
 let activeWeather = { frost: false, fog: false, rain: false };
@@ -145,7 +22,7 @@ function initializeGame() {
     // Initialize Enemy Hand with random cards from DB (simulating a deck)
     enemyHand = []; // Reset to ensure clean start
     for (let i = 0; i < 10; i++) { 
-        const randomCard = cardDatabase[Math.floor(Math.random() * cardDatabase.length)];
+        const randomCard = allCardsData[Math.floor(Math.random() * allCardsData.length)];
         // Clone object to avoid reference issues if we modify it later
         enemyHand.push({ ...randomCard, id: `e${i}_${randomCard.id}` });
     }
@@ -193,7 +70,7 @@ function renderHand() {
 
     handContainer.innerHTML = ''; // Clear existing content
 
-    cardDatabase.forEach(card => {
+    allCardsData.forEach(card => {
         const cardElement = createCardElement(card);
         handContainer.appendChild(cardElement);
     });
@@ -211,6 +88,8 @@ function createCardElement(card) {
     el.dataset.name = card.name;
     el.dataset.ability = card.ability || "none";
     el.dataset.isHero = card.isHero || "false";
+    if (card.partner) el.dataset.partner = card.partner;
+    if (card.row) el.dataset.row = card.row;
 
     if (card.isHero) {
         el.classList.add('hero-card');
@@ -238,12 +117,14 @@ function createCardElement(card) {
     if (card.ability && card.ability !== "none") {
         const abilityIcon = document.createElement('div');
         abilityIcon.classList.add('card-ability-icon');
-        if (card.ability === 'spy') {
+        if (card.ability === 'spy' || card.ability === 'spy_medic') {
             abilityIcon.textContent = "👁️"; // Eye for Spy
         } else if (card.ability === 'scorch') {
             abilityIcon.textContent = "🔥"; // Fire for Scorch
         } else if (card.ability === 'medic') {
             abilityIcon.textContent = "⚕️"; // Medical symbol
+        } else if (card.ability === 'bond_partner') {
+            abilityIcon.textContent = "🤝"; // Handshake for Bond
         } else {
             abilityIcon.textContent = "★"; // Star for others
         }
@@ -270,6 +151,10 @@ function triggerAbility(cardElement, rowElement) {
             break;
         case 'spy':
             applySpy(cardElement, rowElement);
+            break;
+        case 'spy_medic':
+            applySpy(cardElement, rowElement);
+            applyMedic(cardElement, rowElement);
             break;
         case 'scorch':
             applyScorch(cardElement, rowElement);
@@ -420,7 +305,7 @@ function applySpy(cardElement, currentRow) {
 function drawCard(who, count) {
     for (let i = 0; i < count; i++) {
         if (who === 'player') {
-            const randomCard = cardDatabase[Math.floor(Math.random() * cardDatabase.length)];
+            const randomCard = allCardsData[Math.floor(Math.random() * allCardsData.length)];
             const newCard = { ...randomCard, id: `p_draw_${Date.now()}_${i}_${randomCard.id}` };
             const handContainer = document.querySelector('.hand-cards');
             if (handContainer) {
@@ -428,7 +313,7 @@ function drawCard(who, count) {
             }
         } else {
             // Add to enemy hand array
-            const randomCard = cardDatabase[Math.floor(Math.random() * cardDatabase.length)];
+            const randomCard = allCardsData[Math.floor(Math.random() * allCardsData.length)];
             enemyHand.push({ ...randomCard, id: `e_draw_${Date.now()}_${i}_${randomCard.id}` });
             updateEnemyHandUI();
         }
@@ -548,6 +433,14 @@ function updateScore() {
             // Let's assume Heroes are immune to ALL modifications (positive or negative).
             if (!isHero && ability === 'tight_bond' && nameCounts[name] > 1) {
                 power *= 2;
+            }
+
+            // Apply Bond Partner
+            const partner = card.dataset.partner;
+            if (!isHero && ability === 'bond_partner' && partner) {
+                 if (nameCounts[partner] && nameCounts[partner] > 0) {
+                    power *= 2;
+                }
             }
 
             // Update Visuals
@@ -869,9 +762,13 @@ function drop(e) {
     const cardType = e.dataTransfer.getData('card-type');
     const rowType = row.dataset.type;
 
-    // Validation: Card Type must match Row Type OR Card is Weather
-    if (cardType === 'weather' || cardType === rowType) {
-        const card = document.querySelector(`.card[data-id="${cardId}"]`);
+    const card = document.querySelector(`.card[data-id="${cardId}"]`);
+    if (!card) return;
+
+    const cardRow = card.dataset.row;
+
+    // Validation: Card Type must match Row Type OR Card is Weather OR Card Row is 'all'
+    if (cardType === 'weather' || cardType === rowType || cardRow === 'all') {
         if (card) {
             if (cardType === 'weather') {
                 // Trigger Ability
