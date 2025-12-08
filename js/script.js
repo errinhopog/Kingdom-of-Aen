@@ -139,118 +139,112 @@ function createCardElement(card) {
 
     // Drop Events for Decoy Interaction (Only if it's on the board)
     // We add these to ALL cards, but logic inside will filter
-    el.addEventListener('dragover', cardDragOver);
-    el.addEventListener('dragleave', cardDragLeave);
-    el.addEventListener('drop', cardDrop);
+    el.addEventListener('dragover', function(e) {
+        const draggingCard = document.querySelector('.dragging');
+        if (!draggingCard) return;
+
+        const isDecoy = draggingCard.dataset.ability === 'decoy';
+        if (!isDecoy) return;
+
+        const targetCard = e.currentTarget;
+        
+        // Validate Target:
+        // 1. Must be on Player Side (we can check parent row class)
+        const row = targetCard.closest('.row');
+        if (!row || !row.classList.contains('player')) return;
+
+        // 2. Must NOT be Hero
+        if (targetCard.dataset.isHero === "true") return;
+
+        // 3. Must NOT be another Decoy
+        if (targetCard.dataset.ability === 'decoy') return;
+
+        // Valid Target!
+        e.preventDefault(); // Allow drop
+        e.stopPropagation(); // Stop bubbling to row
+        targetCard.classList.add('valid-target');
+    });
+
+    el.addEventListener('dragleave', function(e) {
+        e.currentTarget.classList.remove('valid-target');
+    });
+
+    el.addEventListener('drop', function(e) {
+        const targetCard = e.currentTarget;
+        targetCard.classList.remove('valid-target');
+
+        const draggingCard = document.querySelector('.dragging');
+        if (!draggingCard) return;
+
+        const isDecoy = draggingCard.dataset.ability === 'decoy';
+        if (!isDecoy) return;
+
+        // Validate Target again (security)
+        const row = targetCard.closest('.row');
+        if (!row || !row.classList.contains('player')) return;
+        if (targetCard.dataset.isHero === "true") return;
+        if (targetCard.dataset.ability === 'decoy') return;
+
+        e.preventDefault();
+        e.stopPropagation(); // CRITICAL: Stop row drop handler
+
+        console.log(`Decoy (Manual) ativado! Trocando com: ${targetCard.dataset.name}`);
+
+        // 1. Return Target to Hand
+        const returnedCardObj = {
+            id: targetCard.dataset.id,
+            name: targetCard.dataset.name,
+            type: targetCard.dataset.type,
+            power: parseInt(targetCard.dataset.basePower),
+            ability: targetCard.dataset.ability,
+            isHero: targetCard.dataset.isHero === "true",
+            partner: targetCard.dataset.partner,
+            row: targetCard.dataset.row
+        };
+
+        const handContainer = document.querySelector('.hand-cards');
+        if (handContainer) {
+            const newHandCard = createCardElement(returnedCardObj);
+            handContainer.appendChild(newHandCard);
+        }
+
+        // 2. Place Decoy in Target's Spot
+        // We want to insert the decoy exactly where the target is.
+        // Since draggingCard is currently in the hand (or source), we move it.
+        
+        // Remove target from DOM
+        const parent = targetCard.parentNode;
+        parent.insertBefore(draggingCard, targetCard);
+        targetCard.remove();
+
+        // 3. Finalize Decoy State
+        draggingCard.draggable = false;
+        draggingCard.classList.remove('dragging');
+        
+        // 4. Update Game State
+        updateScore();
+
+        // 5. Trigger Enemy Turn
+        if (!enemyPassed) {
+            isProcessingTurn = true;
+            updateTurnVisuals();
+            setTimeout(() => {
+                enemyTurn();
+                isProcessingTurn = false;
+                updateTurnVisuals();
+            }, 1500);
+        }
+    });
 
     return el;
 }
 
 // --- Card Drop Logic (for Decoy) ---
 
-function cardDragOver(e) {
-    // Only allow if dragging a Decoy
-    // We need to know what is being dragged. 
-    // Since dataTransfer data is not available in dragover (security),
-    // we rely on a global state or class check if possible, OR we just allow it and check in drop.
-    // However, to show visual feedback (valid-target), we need to know.
-    // A common trick is to check a global variable set on dragStart.
-    
-    const draggingCard = document.querySelector('.dragging');
-    if (!draggingCard) return;
-
-    const isDecoy = draggingCard.dataset.ability === 'decoy';
-    if (!isDecoy) return;
-
-    const targetCard = e.currentTarget;
-    
-    // Validate Target:
-    // 1. Must be on Player Side (we can check parent row class)
-    const row = targetCard.closest('.row');
-    if (!row || !row.classList.contains('player')) return;
-
-    // 2. Must NOT be Hero
-    if (targetCard.dataset.isHero === "true") return;
-
-    // 3. Must NOT be another Decoy
-    if (targetCard.dataset.ability === 'decoy') return;
-
-    // Valid Target!
-    e.preventDefault(); // Allow drop
-    e.stopPropagation(); // Stop bubbling to row
-    targetCard.classList.add('valid-target');
-}
-
-function cardDragLeave(e) {
-    e.currentTarget.classList.remove('valid-target');
-}
-
-function cardDrop(e) {
-    const targetCard = e.currentTarget;
-    targetCard.classList.remove('valid-target');
-
-    const draggingCard = document.querySelector('.dragging');
-    if (!draggingCard) return;
-
-    const isDecoy = draggingCard.dataset.ability === 'decoy';
-    if (!isDecoy) return;
-
-    // Validate Target again (security)
-    const row = targetCard.closest('.row');
-    if (!row || !row.classList.contains('player')) return;
-    if (targetCard.dataset.isHero === "true") return;
-    if (targetCard.dataset.ability === 'decoy') return;
-
-    e.preventDefault();
-    e.stopPropagation(); // CRITICAL: Stop row drop handler
-
-    console.log(`Decoy (Manual) ativado! Trocando com: ${targetCard.dataset.name}`);
-
-    // 1. Return Target to Hand
-    const returnedCardObj = {
-        id: targetCard.dataset.id,
-        name: targetCard.dataset.name,
-        type: targetCard.dataset.type,
-        power: parseInt(targetCard.dataset.basePower),
-        ability: targetCard.dataset.ability,
-        isHero: targetCard.dataset.isHero === "true",
-        partner: targetCard.dataset.partner,
-        row: targetCard.dataset.row
-    };
-
-    const handContainer = document.querySelector('.hand-cards');
-    if (handContainer) {
-        const newHandCard = createCardElement(returnedCardObj);
-        handContainer.appendChild(newHandCard);
-    }
-
-    // 2. Place Decoy in Target's Spot
-    // We want to insert the decoy exactly where the target is.
-    // Since draggingCard is currently in the hand (or source), we move it.
-    
-    // Remove target from DOM
-    const parent = targetCard.parentNode;
-    parent.insertBefore(draggingCard, targetCard);
-    targetCard.remove();
-
-    // 3. Finalize Decoy State
-    draggingCard.draggable = false;
-    draggingCard.classList.remove('dragging');
-    
-    // 4. Update Game State
-    updateScore();
-
-    // 5. Trigger Enemy Turn
-    if (!enemyPassed) {
-        isProcessingTurn = true;
-        updateTurnVisuals();
-        setTimeout(() => {
-            enemyTurn();
-            isProcessingTurn = false;
-            updateTurnVisuals();
-        }, 1500);
-    }
-}
+// Deprecated named functions (logic moved inline to createCardElement)
+function cardDragOver(e) {}
+function cardDragLeave(e) {}
+function cardDrop(e) {}
 
 // --- Ability Logic ---
 
@@ -1067,6 +1061,12 @@ function drop(e) {
     // Validation: Card Type must match Row Type OR Card is Weather OR Card Row is 'all'
     if (cardType === 'weather' || cardType === rowType || cardRow === 'all') {
         if (card) {
+            // Decoy Check: Cannot be dropped on row (must target a card)
+            if (card.dataset.ability === 'decoy') {
+                console.log("Espantalho jogado no vazio. Ação cancelada.");
+                return;
+            }
+
             if (cardType === 'weather') {
                 // Trigger Ability
                 triggerAbility(card, row);
