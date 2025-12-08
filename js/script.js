@@ -125,6 +125,8 @@ function createCardElement(card) {
             abilityIcon.textContent = "⚕️"; // Medical symbol
         } else if (card.ability === 'bond_partner') {
             abilityIcon.textContent = "🤝"; // Handshake for Bond
+        } else if (card.ability === 'decoy') {
+            abilityIcon.textContent = "🔄"; // Arrows for Decoy
         } else {
             abilityIcon.textContent = "★"; // Star for others
         }
@@ -173,6 +175,9 @@ function triggerAbility(cardElement, rowElement) {
             break;
         case 'weather_clear':
             clearWeather();
+            break;
+        case 'decoy':
+            applyDecoy(cardElement, rowElement);
             break;
         // Future abilities can be added here
         default:
@@ -265,6 +270,84 @@ function applyMedic(cardElement, currentRow) {
             updateScore();
         }, 300);
     }
+}
+
+function applyDecoy(cardElement, currentRow) {
+    const isPlayerSide = currentRow.classList.contains('player');
+    
+    // Only works for player for now (Enemy AI doesn't use Decoy yet)
+    if (!isPlayerSide) return;
+
+    const cardsContainer = currentRow.querySelector('.cards-container');
+    if (!cardsContainer) return;
+
+    // 1. Identify Allies (excluding the Decoy itself and Heroes)
+    const allies = Array.from(cardsContainer.querySelectorAll('.card')).filter(card => {
+        return card !== cardElement && 
+               card.dataset.isHero !== "true" && 
+               card.dataset.ability !== "decoy";
+    });
+
+    if (allies.length === 0) {
+        console.log("Decoy falhou: Nenhum alvo válido para trocar.");
+        // Move Decoy to graveyard (wasted)
+        const cardObj = {
+            id: cardElement.dataset.id,
+            name: cardElement.dataset.name,
+            type: cardElement.dataset.type,
+            power: parseInt(cardElement.dataset.basePower),
+            ability: cardElement.dataset.ability,
+            isHero: cardElement.dataset.isHero === "true"
+        };
+        playerGraveyard.push(cardObj);
+        cardElement.remove();
+        updateScore();
+        return;
+    }
+
+    // 2. Find Target (Highest Base Power)
+    let targetCard = allies[0];
+    let maxPower = -1;
+
+    allies.forEach(card => {
+        const power = parseInt(card.dataset.basePower);
+        if (power > maxPower) {
+            maxPower = power;
+            targetCard = card;
+        }
+    });
+
+    console.log(`Decoy ativado! Trocando com: ${targetCard.dataset.name}`);
+
+    // 3. Return Target to Hand
+    // Reconstruct card object
+    const returnedCardObj = {
+        id: targetCard.dataset.id,
+        name: targetCard.dataset.name,
+        type: targetCard.dataset.type,
+        power: parseInt(targetCard.dataset.basePower),
+        ability: targetCard.dataset.ability,
+        isHero: targetCard.dataset.isHero === "true",
+        partner: targetCard.dataset.partner,
+        row: targetCard.dataset.row
+    };
+
+    // Add to Hand DOM
+    const handContainer = document.querySelector('.hand-cards');
+    if (handContainer) {
+        const newHandCard = createCardElement(returnedCardObj);
+        handContainer.appendChild(newHandCard);
+    }
+
+    // Remove Target from Board
+    targetCard.remove();
+
+    // 4. Decoy stays on board (already there)
+    // Just ensure it's not draggable anymore
+    cardElement.draggable = false;
+    cardElement.classList.remove('dragging');
+
+    updateScore();
 }
 
 function applyTightBond(row, name, basePower) {
