@@ -137,7 +137,119 @@ function createCardElement(card) {
     el.addEventListener('dragstart', dragStart);
     el.addEventListener('dragend', dragEnd);
 
+    // Drop Events for Decoy Interaction (Only if it's on the board)
+    // We add these to ALL cards, but logic inside will filter
+    el.addEventListener('dragover', cardDragOver);
+    el.addEventListener('dragleave', cardDragLeave);
+    el.addEventListener('drop', cardDrop);
+
     return el;
+}
+
+// --- Card Drop Logic (for Decoy) ---
+
+function cardDragOver(e) {
+    // Only allow if dragging a Decoy
+    // We need to know what is being dragged. 
+    // Since dataTransfer data is not available in dragover (security),
+    // we rely on a global state or class check if possible, OR we just allow it and check in drop.
+    // However, to show visual feedback (valid-target), we need to know.
+    // A common trick is to check a global variable set on dragStart.
+    
+    const draggingCard = document.querySelector('.dragging');
+    if (!draggingCard) return;
+
+    const isDecoy = draggingCard.dataset.ability === 'decoy';
+    if (!isDecoy) return;
+
+    const targetCard = e.currentTarget;
+    
+    // Validate Target:
+    // 1. Must be on Player Side (we can check parent row class)
+    const row = targetCard.closest('.row');
+    if (!row || !row.classList.contains('player')) return;
+
+    // 2. Must NOT be Hero
+    if (targetCard.dataset.isHero === "true") return;
+
+    // 3. Must NOT be another Decoy
+    if (targetCard.dataset.ability === 'decoy') return;
+
+    // Valid Target!
+    e.preventDefault(); // Allow drop
+    e.stopPropagation(); // Stop bubbling to row
+    targetCard.classList.add('valid-target');
+}
+
+function cardDragLeave(e) {
+    e.currentTarget.classList.remove('valid-target');
+}
+
+function cardDrop(e) {
+    const targetCard = e.currentTarget;
+    targetCard.classList.remove('valid-target');
+
+    const draggingCard = document.querySelector('.dragging');
+    if (!draggingCard) return;
+
+    const isDecoy = draggingCard.dataset.ability === 'decoy';
+    if (!isDecoy) return;
+
+    // Validate Target again (security)
+    const row = targetCard.closest('.row');
+    if (!row || !row.classList.contains('player')) return;
+    if (targetCard.dataset.isHero === "true") return;
+    if (targetCard.dataset.ability === 'decoy') return;
+
+    e.preventDefault();
+    e.stopPropagation(); // CRITICAL: Stop row drop handler
+
+    console.log(`Decoy (Manual) ativado! Trocando com: ${targetCard.dataset.name}`);
+
+    // 1. Return Target to Hand
+    const returnedCardObj = {
+        id: targetCard.dataset.id,
+        name: targetCard.dataset.name,
+        type: targetCard.dataset.type,
+        power: parseInt(targetCard.dataset.basePower),
+        ability: targetCard.dataset.ability,
+        isHero: targetCard.dataset.isHero === "true",
+        partner: targetCard.dataset.partner,
+        row: targetCard.dataset.row
+    };
+
+    const handContainer = document.querySelector('.hand-cards');
+    if (handContainer) {
+        const newHandCard = createCardElement(returnedCardObj);
+        handContainer.appendChild(newHandCard);
+    }
+
+    // 2. Place Decoy in Target's Spot
+    // We want to insert the decoy exactly where the target is.
+    // Since draggingCard is currently in the hand (or source), we move it.
+    
+    // Remove target from DOM
+    const parent = targetCard.parentNode;
+    parent.insertBefore(draggingCard, targetCard);
+    targetCard.remove();
+
+    // 3. Finalize Decoy State
+    draggingCard.draggable = false;
+    draggingCard.classList.remove('dragging');
+    
+    // 4. Update Game State
+    updateScore();
+
+    // 5. Trigger Enemy Turn
+    if (!enemyPassed) {
+        isProcessingTurn = true;
+        updateTurnVisuals();
+        setTimeout(() => {
+            enemyTurn();
+            isProcessingTurn = false;
+            updateTurnVisuals();
+        }, 1500);
+    }
 }
 
 // --- Ability Logic ---
@@ -177,7 +289,7 @@ function triggerAbility(cardElement, rowElement) {
             clearWeather();
             break;
         case 'decoy':
-            applyDecoy(cardElement, rowElement);
+            // Decoy logic is now handled via manual drop on target card
             break;
         // Future abilities can be added here
         default:
@@ -273,81 +385,7 @@ function applyMedic(cardElement, currentRow) {
 }
 
 function applyDecoy(cardElement, currentRow) {
-    const isPlayerSide = currentRow.classList.contains('player');
-    
-    // Only works for player for now (Enemy AI doesn't use Decoy yet)
-    if (!isPlayerSide) return;
-
-    const cardsContainer = currentRow.querySelector('.cards-container');
-    if (!cardsContainer) return;
-
-    // 1. Identify Allies (excluding the Decoy itself and Heroes)
-    const allies = Array.from(cardsContainer.querySelectorAll('.card')).filter(card => {
-        return card !== cardElement && 
-               card.dataset.isHero !== "true" && 
-               card.dataset.ability !== "decoy";
-    });
-
-    if (allies.length === 0) {
-        console.log("Decoy falhou: Nenhum alvo válido para trocar.");
-        // Move Decoy to graveyard (wasted)
-        const cardObj = {
-            id: cardElement.dataset.id,
-            name: cardElement.dataset.name,
-            type: cardElement.dataset.type,
-            power: parseInt(cardElement.dataset.basePower),
-            ability: cardElement.dataset.ability,
-            isHero: cardElement.dataset.isHero === "true"
-        };
-        playerGraveyard.push(cardObj);
-        cardElement.remove();
-        updateScore();
-        return;
-    }
-
-    // 2. Find Target (Highest Base Power)
-    let targetCard = allies[0];
-    let maxPower = -1;
-
-    allies.forEach(card => {
-        const power = parseInt(card.dataset.basePower);
-        if (power > maxPower) {
-            maxPower = power;
-            targetCard = card;
-        }
-    });
-
-    console.log(`Decoy ativado! Trocando com: ${targetCard.dataset.name}`);
-
-    // 3. Return Target to Hand
-    // Reconstruct card object
-    const returnedCardObj = {
-        id: targetCard.dataset.id,
-        name: targetCard.dataset.name,
-        type: targetCard.dataset.type,
-        power: parseInt(targetCard.dataset.basePower),
-        ability: targetCard.dataset.ability,
-        isHero: targetCard.dataset.isHero === "true",
-        partner: targetCard.dataset.partner,
-        row: targetCard.dataset.row
-    };
-
-    // Add to Hand DOM
-    const handContainer = document.querySelector('.hand-cards');
-    if (handContainer) {
-        const newHandCard = createCardElement(returnedCardObj);
-        handContainer.appendChild(newHandCard);
-    }
-
-    // Remove Target from Board
-    targetCard.remove();
-
-    // 4. Decoy stays on board (already there)
-    // Just ensure it's not draggable anymore
-    cardElement.draggable = false;
-    cardElement.classList.remove('dragging');
-
-    updateScore();
+    // Deprecated: Logic moved to manual drop on card
 }
 
 function applyTightBond(row, name, basePower) {
@@ -582,24 +620,183 @@ function enemyTurn() {
         return;
     }
 
-    // 3. Play a Card
-    // Simple AI: Play random card
-    const cardIndex = Math.floor(Math.random() * enemyHand.length);
-    const cardToPlay = enemyHand[cardIndex];
+    // 3. Evaluate Hand and Assign Priorities
+    let bestCardIndex = -1;
+    let maxPriority = -1;
+    let bestTargetForDecoy = null;
+
+    enemyHand.forEach((card, index) => {
+        let priority = 0;
+        let decoyTarget = null;
+
+        // --- Heuristics ---
+
+        // A. Spies (High Priority if losing or early game)
+        if (card.ability === 'spy' || card.ability === 'spy_medic') {
+            if (scores.totalOpponent < scores.totalPlayer) {
+                priority += 50; // Desperate for cards/advantage
+            } else {
+                priority += 20; // Good to play early
+            }
+        }
+
+        // B. Medics (High Priority if graveyard has strong units)
+        else if (card.ability === 'medic' || card.ability === 'spy_medic') {
+            // Check graveyard for non-hero units
+            const validTargets = enemyGraveyard.filter(c => !c.isHero);
+            if (validTargets.length > 0) {
+                // Find max power in graveyard
+                const maxGravePower = Math.max(...validTargets.map(c => c.power));
+                priority += 10 + maxGravePower; // Base 10 + Power of revived unit
+            } else {
+                priority = 1; // Very low priority if nothing to revive
+            }
+        }
+
+        // C. Bond Partners (High Priority if partner is on board)
+        else if (card.ability === 'bond_partner' && card.partner) {
+            // Check if partner is on board (Opponent side)
+            const partnerName = card.partner;
+            // We need to check all opponent rows
+            const opponentRows = document.querySelectorAll('.row.opponent .cards-container');
+            let partnerFound = false;
+            opponentRows.forEach(container => {
+                if (container.querySelector(`.card[data-name="${partnerName}"]`)) {
+                    partnerFound = true;
+                }
+            });
+
+            if (partnerFound) {
+                priority += 40; // Huge priority for combo
+            } else {
+                priority += card.power; // Normal priority based on power
+            }
+        }
+
+        // D. Decoy (Strategic Swap)
+        else if (card.ability === 'decoy') {
+            // Look for targets on Opponent side
+            const opponentRows = document.querySelectorAll('.row.opponent .cards-container');
+            let bestTarget = null;
+            let maxTargetValue = -1;
+
+            opponentRows.forEach(container => {
+                const cards = Array.from(container.querySelectorAll('.card'));
+                cards.forEach(c => {
+                    if (c.dataset.isHero === "true" || c.dataset.ability === 'decoy') return;
+                    
+                    const currentPower = parseInt(c.dataset.power);
+                    const basePower = parseInt(c.dataset.basePower);
+                    
+                    // Value 1: Save high base power unit (to replay later)
+                    // Value 2: Save weakened unit (current < base) to reset it
+                    // Value 3: Save Medic/Spy to reuse ability? (Advanced)
+                    
+                    let value = 0;
+                    if (currentPower < basePower) {
+                        value += (basePower - currentPower) * 2; // Heal value
+                    }
+                    value += basePower; // Save value
+
+                    if (value > maxTargetValue) {
+                        maxTargetValue = value;
+                        bestTarget = c;
+                    }
+                });
+            });
+
+            if (bestTarget && maxTargetValue > 5) { // Threshold to make it worth it
+                priority += 15 + maxTargetValue;
+                decoyTarget = bestTarget;
+            } else {
+                priority = 0; // Don't play decoy if no good target
+            }
+        }
+
+        // E. Standard Units / Weather / Scorch
+        else {
+            priority += card.power;
+            
+            // Scorch logic could be added here (check if it kills enemy units)
+            if (card.ability === 'scorch') {
+                // Simple check: does player have high cards?
+                // For now, treat as high power card
+                priority += 5; 
+            }
+        }
+
+        // Update Best Card
+        if (priority > maxPriority) {
+            maxPriority = priority;
+            bestCardIndex = index;
+            bestTargetForDecoy = decoyTarget;
+        }
+    });
+
+    // 4. Execute Play
+    if (bestCardIndex === -1 || maxPriority === 0) {
+        // No good moves? Pass or play random low value?
+        // If we have cards but priority is 0 (e.g. only Decoy with no target), we might be forced to pass or burn a card.
+        // Let's try to play the lowest power card if we can't find a "good" move, or pass if we are winning.
+        if (scores.totalOpponent > scores.totalPlayer) {
+            console.log("IA: Sem boas jogadas e ganhando. Passar.");
+            passTurn('opponent');
+            return;
+        } else {
+            // Play random (fallback) to avoid getting stuck
+            console.log("IA: Sem jogadas prioritárias. Jogando aleatório.");
+            bestCardIndex = Math.floor(Math.random() * enemyHand.length);
+        }
+    }
+
+    const cardToPlay = enemyHand[bestCardIndex];
     
-    // Remove from hand (CRITICAL: Must happen before playing)
-    enemyHand.splice(cardIndex, 1);
+    // Remove from hand
+    enemyHand.splice(bestCardIndex, 1);
     updateEnemyHandUI();
 
-    // Find correct row
+    // Handle Decoy Special Case
+    if (cardToPlay.ability === 'decoy' && bestTargetForDecoy) {
+        console.log(`IA jogou Decoy em ${bestTargetForDecoy.dataset.name}`);
+        
+        // 1. Return Target to Enemy Hand (Logic only, no UI needed for enemy hand really, but we update array)
+        const returnedCardObj = {
+            id: bestTargetForDecoy.dataset.id,
+            name: bestTargetForDecoy.dataset.name,
+            type: bestTargetForDecoy.dataset.type,
+            power: parseInt(bestTargetForDecoy.dataset.basePower),
+            ability: bestTargetForDecoy.dataset.ability,
+            isHero: bestTargetForDecoy.dataset.isHero === "true",
+            partner: bestTargetForDecoy.dataset.partner,
+            row: bestTargetForDecoy.dataset.row
+        };
+        enemyHand.push(returnedCardObj);
+        updateEnemyHandUI();
+
+        // 2. Replace on Board
+        const decoyElement = createCardElement(cardToPlay);
+        decoyElement.draggable = false;
+        
+        const parent = bestTargetForDecoy.parentNode;
+        parent.insertBefore(decoyElement, bestTargetForDecoy);
+        bestTargetForDecoy.remove();
+        
+        updateScore();
+        return;
+    }
+
+    // Standard Play Logic
     let targetRow = null;
     if (cardToPlay.type === 'weather') {
-        // Weather can be played "anywhere", but for logic we just need to trigger it.
-        // We'll just use the first opponent row as a dummy container to pass to triggerAbility if needed,
-        // but applyWeather doesn't use the row element.
         targetRow = document.querySelector('.row.opponent'); 
     } else {
-        targetRow = document.querySelector(`.row.opponent[data-type="${cardToPlay.type}"] .cards-container`);
+        // Handle Agile (row: 'all') for AI - Prefer Melee for now or random?
+        // Let's default to Melee for Agile units if type is generic, or use their default type
+        let type = cardToPlay.type;
+        if (cardToPlay.row === 'all') {
+            type = 'melee'; // AI default preference
+        }
+        targetRow = document.querySelector(`.row.opponent[data-type="${type}"] .cards-container`);
     }
 
     if (targetRow) {
@@ -607,16 +804,12 @@ function enemyTurn() {
         
         if (cardToPlay.type === 'weather') {
              triggerAbility(cardElement, targetRow);
-             // Add to enemy graveyard
              enemyGraveyard.push(cardToPlay);
              console.log(`Inimigo jogou Clima: ${cardToPlay.name}`);
         } else {
-            cardElement.draggable = false; // Enemy cards shouldn't be draggable by player
+            cardElement.draggable = false;
             targetRow.appendChild(cardElement);
-            
-            // Trigger Ability
             triggerAbility(cardElement, targetRow);
-            
             console.log(`Inimigo jogou: ${cardToPlay.name}`);
         }
     }
