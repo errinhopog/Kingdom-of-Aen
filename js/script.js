@@ -593,218 +593,503 @@ function updateScore() {
     return { totalPlayer, totalOpponent };
 }
 
+// ============================================
+// ===       IA TÁTICA - FUNÇÕES AUXILIARES  ===
+// ============================================
+
+/**
+ * Conta quantas cartas o jogador tem na mão
+ */
+function getPlayerHandCount() {
+    const handContainer = document.querySelector('.hand-cards');
+    if (!handContainer) return 0;
+    return handContainer.querySelectorAll('.card').length;
+}
+
+/**
+ * Verifica se o parceiro de uma carta está no tabuleiro do inimigo
+ */
+function isPartnerOnBoard(partnerName) {
+    const opponentRows = document.querySelectorAll('.row.opponent .cards-container');
+    for (const container of opponentRows) {
+        if (container.querySelector(`.card[data-name="${partnerName}"]`)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Verifica se o parceiro de uma carta está na mão do inimigo
+ */
+function isPartnerInHand(partnerName) {
+    return enemyHand.some(c => c.name === partnerName);
+}
+
+/**
+ * Encontra espiões do jogador no lado do inimigo (para recolher com Decoy)
+ */
+function findPlayerSpiesOnEnemySide() {
+    const spies = [];
+    const opponentRows = document.querySelectorAll('.row.opponent .cards-container');
+    opponentRows.forEach(container => {
+        const cards = Array.from(container.querySelectorAll('.card'));
+        cards.forEach(card => {
+            // Espiões jogados pelo jogador vão para o lado do oponente
+            // Identificamos pelo ID que começa com "p" (player) ou pela classe spy-card
+            if (card.classList.contains('spy-card') && card.dataset.isHero !== "true") {
+                spies.push(card);
+            }
+        });
+    });
+    return spies;
+}
+
+/**
+ * Encontra alvos válidos para o Decoy no lado do inimigo
+ */
+function findDecoyTargets() {
+    const targets = [];
+    const opponentRows = document.querySelectorAll('.row.opponent .cards-container');
+    opponentRows.forEach(container => {
+        const cards = Array.from(container.querySelectorAll('.card'));
+        cards.forEach(card => {
+            if (card.dataset.isHero !== "true" && card.dataset.ability !== 'decoy') {
+                targets.push({
+                    element: card,
+                    basePower: parseInt(card.dataset.basePower),
+                    currentPower: parseInt(card.dataset.power),
+                    ability: card.dataset.ability,
+                    isSpy: card.classList.contains('spy-card')
+                });
+            }
+        });
+    });
+    return targets;
+}
+
+/**
+ * Encontra a carta mais forte no lado do JOGADOR (para avaliar Scorch)
+ */
+function findStrongestPlayerCard() {
+    let maxPower = -1;
+    let strongestCard = null;
+    const playerRows = document.querySelectorAll('.row.player .cards-container');
+    playerRows.forEach(container => {
+        const cards = Array.from(container.querySelectorAll('.card'));
+        cards.forEach(card => {
+            if (card.dataset.isHero !== "true") {
+                const power = parseInt(card.dataset.power);
+                if (power > maxPower) {
+                    maxPower = power;
+                    strongestCard = card;
+                }
+            }
+        });
+    });
+    return { card: strongestCard, power: maxPower };
+}
+
+/**
+ * Encontra a carta mais forte no lado do INIMIGO (para evitar fogo amigo)
+ */
+function findStrongestEnemyCard() {
+    let maxPower = -1;
+    let strongestCard = null;
+    const opponentRows = document.querySelectorAll('.row.opponent .cards-container');
+    opponentRows.forEach(container => {
+        const cards = Array.from(container.querySelectorAll('.card'));
+        cards.forEach(card => {
+            if (card.dataset.isHero !== "true") {
+                const power = parseInt(card.dataset.power);
+                if (power > maxPower) {
+                    maxPower = power;
+                    strongestCard = card;
+                }
+            }
+        });
+    });
+    return { card: strongestCard, power: maxPower };
+}
+
+/**
+ * Conta o total de cartas jogadas no tabuleiro (para determinar fase do jogo)
+ */
+function getTotalCardsOnBoard() {
+    let count = 0;
+    const allRows = document.querySelectorAll('.row .cards-container');
+    allRows.forEach(container => {
+        count += container.querySelectorAll('.card').length;
+    });
+    return count;
+}
+
+/**
+ * Determina a melhor fileira para jogar cartas Agile (row: 'all')
+ */
+function getBestRowForAgile() {
+    // Preferência: fileira com menos clima ativo ou mais cartas aliadas para sinergia
+    const rowTypes = ['melee', 'ranged', 'siege'];
+    const weatherMap = { melee: 'frost', ranged: 'fog', siege: 'rain' };
+    
+    // Priorizar fileira sem clima
+    for (const type of rowTypes) {
+        if (!activeWeather[weatherMap[type]]) {
+            return type;
+        }
+    }
+    return 'melee'; // Default
+}
+
+// ============================================
+// ===        IA TÁTICA - FUNÇÃO PRINCIPAL   ===
+// ============================================
+
 function enemyTurn() {
     if (enemyPassed) return;
 
     const scores = updateScore();
+    const playerHandCount = getPlayerHandCount();
+    const totalCardsOnBoard = getTotalCardsOnBoard();
+    const isEarlyGame = totalCardsOnBoard < 6;
+    const scoreDifference = scores.totalOpponent - scores.totalPlayer;
     
-    // --- AI LOGIC ---
+    console.log(`[IA] Pontuação: Inimigo ${scores.totalOpponent} vs Jogador ${scores.totalPlayer}`);
+    console.log(`[IA] Cartas na mão: Inimigo ${enemyHand.length} vs Jogador ${playerHandCount}`);
 
-    // 1. Check if hand is empty
+    // ==========================================
+    // REGRA 1: VERIFICAR SE DEVE PASSAR
+    // ==========================================
+    
+    // 1.1 - Mão vazia: forçar passar
     if (enemyHand.length === 0) {
-        console.log("Inimigo sem cartas. Forçando passar.");
+        console.log("[IA] Sem cartas na mão. Passando.");
         passTurn('opponent');
         return;
     }
 
-    // 2. Strategic Pass: If Player passed AND Enemy is winning
+    // 1.2 - Jogador passou E inimigo está ganhando: PASSAR IMEDIATAMENTE
     if (playerPassed && scores.totalOpponent > scores.totalPlayer) {
-        console.log("Inimigo está ganhando e jogador passou. Inimigo passa para economizar.");
+        console.log("[IA] Jogador passou e estou ganhando. Passando para economizar cartas!");
         passTurn('opponent');
         return;
     }
 
-    // 3. Evaluate Hand and Assign Priorities
+    // 1.3 - Vantagem >= 15 pontos E menos cartas que o jogador: passar para economizar
+    if (scoreDifference >= 15 && enemyHand.length < playerHandCount) {
+        console.log("[IA] Grande vantagem de pontos e menos cartas. Passando estrategicamente!");
+        passTurn('opponent');
+        return;
+    }
+
+    // ==========================================
+    // REGRA 2-6: AVALIAR PRIORIDADES DAS CARTAS
+    // ==========================================
+    
     let bestCardIndex = -1;
     let maxPriority = -1;
-    let bestTargetForDecoy = null;
+    let bestDecoyTarget = null;
+    let bestRowOverride = null; // Para cartas Agile
 
     enemyHand.forEach((card, index) => {
         let priority = 0;
         let decoyTarget = null;
+        let rowOverride = null;
 
-        // --- Heuristics ---
+        const ability = card.ability || 'none';
 
-        // A. Spies (High Priority if losing or early game)
-        if (card.ability === 'spy' || card.ability === 'spy_medic') {
-            if (scores.totalOpponent < scores.totalPlayer) {
-                priority += 50; // Desperate for cards/advantage
+        // ------------------------------------------
+        // REGRA 2: ESPIÕES (Alta prioridade no início ou se perdendo)
+        // ------------------------------------------
+        if (ability === 'spy' || ability === 'spy_medic') {
+            if (isEarlyGame) {
+                priority = 100; // Prioridade MÁXIMA no início (vantagem de cartas)
+                console.log(`[IA] Espião ${card.name}: Prioridade 100 (início do jogo)`);
+            } else if (scores.totalOpponent < scores.totalPlayer) {
+                priority = 90; // Alta prioridade se estiver perdendo
+                console.log(`[IA] Espião ${card.name}: Prioridade 90 (perdendo)`);
+            } else if (enemyHand.length < playerHandCount) {
+                priority = 80; // Alta se tiver menos cartas
+                console.log(`[IA] Espião ${card.name}: Prioridade 80 (menos cartas)`);
             } else {
-                priority += 20; // Good to play early
+                priority = 30; // Prioridade moderada
+                console.log(`[IA] Espião ${card.name}: Prioridade 30 (padrão)`);
             }
         }
 
-        // B. Medics (High Priority if graveyard has strong units)
-        else if (card.ability === 'medic' || card.ability === 'spy_medic') {
-            // Check graveyard for non-hero units
+        // ------------------------------------------
+        // REGRA 3: MÉDICO
+        // ------------------------------------------
+        else if (ability === 'medic') {
             const validTargets = enemyGraveyard.filter(c => !c.isHero);
-            if (validTargets.length > 0) {
-                // Find max power in graveyard
-                const maxGravePower = Math.max(...validTargets.map(c => c.power));
-                priority += 10 + maxGravePower; // Base 10 + Power of revived unit
-            } else {
-                priority = 1; // Very low priority if nothing to revive
-            }
-        }
-
-        // C. Bond Partners (High Priority if partner is on board)
-        else if (card.ability === 'bond_partner' && card.partner) {
-            // Check if partner is on board (Opponent side)
-            const partnerName = card.partner;
-            // We need to check all opponent rows
-            const opponentRows = document.querySelectorAll('.row.opponent .cards-container');
-            let partnerFound = false;
-            opponentRows.forEach(container => {
-                if (container.querySelector(`.card[data-name="${partnerName}"]`)) {
-                    partnerFound = true;
-                }
-            });
-
-            if (partnerFound) {
-                priority += 40; // Huge priority for combo
-            } else {
-                priority += card.power; // Normal priority based on power
-            }
-        }
-
-        // D. Decoy (Strategic Swap)
-        else if (card.ability === 'decoy') {
-            // Look for targets on Opponent side
-            const opponentRows = document.querySelectorAll('.row.opponent .cards-container');
-            let bestTarget = null;
-            let maxTargetValue = -1;
-
-            opponentRows.forEach(container => {
-                const cards = Array.from(container.querySelectorAll('.card'));
-                cards.forEach(c => {
-                    if (c.dataset.isHero === "true" || c.dataset.ability === 'decoy') return;
-                    
-                    const currentPower = parseInt(c.dataset.power);
-                    const basePower = parseInt(c.dataset.basePower);
-                    
-                    // Value 1: Save high base power unit (to replay later)
-                    // Value 2: Save weakened unit (current < base) to reset it
-                    // Value 3: Save Medic/Spy to reuse ability? (Advanced)
-                    
-                    let value = 0;
-                    if (currentPower < basePower) {
-                        value += (basePower - currentPower) * 2; // Heal value
-                    }
-                    value += basePower; // Save value
-
-                    if (value > maxTargetValue) {
-                        maxTargetValue = value;
-                        bestTarget = c;
-                    }
-                });
-            });
-
-            if (bestTarget && maxTargetValue > 5) { // Threshold to make it worth it
-                priority += 15 + maxTargetValue;
-                decoyTarget = bestTarget;
-            } else {
-                priority = 0; // Don't play decoy if no good target
-            }
-        }
-
-        // E. Standard Units / Weather / Scorch
-        else {
-            priority += card.power;
             
-            // Scorch logic could be added here (check if it kills enemy units)
-            if (card.ability === 'scorch') {
-                // Simple check: does player have high cards?
-                // For now, treat as high power card
-                priority += 5; 
+            if (validTargets.length === 0) {
+                priority = 0; // ZERO se cemitério vazio
+                console.log(`[IA] Médico ${card.name}: Prioridade 0 (cemitério vazio)`);
+            } else {
+                const maxGravePower = Math.max(...validTargets.map(c => c.power));
+                if (maxGravePower >= 5) {
+                    priority = 70 + maxGravePower; // Alta prioridade para unidades fortes
+                    console.log(`[IA] Médico ${card.name}: Prioridade ${priority} (unidade forte no cemitério)`);
+                } else {
+                    priority = 20 + maxGravePower; // Prioridade baixa-moderada
+                    console.log(`[IA] Médico ${card.name}: Prioridade ${priority} (unidade fraca no cemitério)`);
+                }
             }
         }
 
-        // Update Best Card
+        // ------------------------------------------
+        // REGRA 4: PARCEIROS (Bond)
+        // ------------------------------------------
+        else if (ability === 'bond_partner' && card.partner) {
+            const partnerOnBoard = isPartnerOnBoard(card.partner);
+            const partnerInHand = isPartnerInHand(card.partner);
+
+            if (partnerOnBoard) {
+                priority = 150; // Prioridade MÁXIMA - completar o combo!
+                console.log(`[IA] ${card.name}: Prioridade 150 (parceiro ${card.partner} na mesa!)`);
+            } else if (partnerInHand) {
+                priority = card.power + 15; // Boa prioridade - preparar combo
+                console.log(`[IA] ${card.name}: Prioridade ${priority} (parceiro na mão, preparando combo)`);
+            } else {
+                priority = card.power; // Prioridade normal baseada em poder
+                console.log(`[IA] ${card.name}: Prioridade ${priority} (sem parceiro disponível)`);
+            }
+        }
+
+        // ------------------------------------------
+        // REGRA 5: ESPANTALHO (Decoy)
+        // ------------------------------------------
+        else if (ability === 'decoy') {
+            const targets = findDecoyTargets();
+            
+            if (targets.length === 0) {
+                priority = 0; // NUNCA jogar sem alvo válido
+                console.log(`[IA] Decoy: Prioridade 0 (sem alvos válidos)`);
+            } else {
+                // Prioridade 1: Recolher espiões do jogador (para jogar de volta!)
+                const playerSpies = targets.filter(t => t.isSpy);
+                if (playerSpies.length > 0) {
+                    // Pegar o espião com maior poder base (para causar mais dano quando jogar de volta)
+                    const bestSpy = playerSpies.reduce((a, b) => a.basePower > b.basePower ? a : b);
+                    priority = 85; // Alta prioridade
+                    decoyTarget = bestSpy.element;
+                    console.log(`[IA] Decoy: Prioridade 85 (recolher espião do jogador: ${bestSpy.element.dataset.name})`);
+                } 
+                // Prioridade 2: Salvar carta forte (>= 6 poder base) afetada por clima
+                else {
+                    const strongWeakened = targets.filter(t => 
+                        t.basePower >= 6 && t.currentPower < t.basePower && !t.isSpy
+                    );
+                    
+                    if (strongWeakened.length > 0) {
+                        const best = strongWeakened.reduce((a, b) => a.basePower > b.basePower ? a : b);
+                        priority = 45 + best.basePower;
+                        decoyTarget = best.element;
+                        console.log(`[IA] Decoy: Prioridade ${priority} (salvar carta forte: ${best.element.dataset.name})`);
+                    }
+                    // Prioridade 3: Reutilizar Médico/Espião próprio
+                    else {
+                        const reusable = targets.filter(t => 
+                            (t.ability === 'medic' || t.ability === 'spy' || t.ability === 'spy_medic') && !t.isSpy
+                        );
+                        
+                        if (reusable.length > 0) {
+                            const best = reusable[0];
+                            priority = 40;
+                            decoyTarget = best.element;
+                            console.log(`[IA] Decoy: Prioridade 40 (reutilizar habilidade: ${best.element.dataset.name})`);
+                        }
+                        // Prioridade 4: Salvar qualquer carta forte
+                        else {
+                            const strong = targets.filter(t => t.basePower >= 6 && !t.isSpy);
+                            if (strong.length > 0) {
+                                const best = strong.reduce((a, b) => a.basePower > b.basePower ? a : b);
+                                priority = 25;
+                                decoyTarget = best.element;
+                                console.log(`[IA] Decoy: Prioridade 25 (salvar carta: ${best.element.dataset.name})`);
+                            } else {
+                                priority = 0; // Não vale a pena
+                                console.log(`[IA] Decoy: Prioridade 0 (nenhum alvo vale a pena)`);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ------------------------------------------
+        // REGRA 6: SCORCH (Queima)
+        // ------------------------------------------
+        else if (ability === 'scorch') {
+            const strongestPlayer = findStrongestPlayerCard();
+            const strongestEnemy = findStrongestEnemyCard();
+            
+            // Só jogar se a carta mais forte for do JOGADOR (evitar fogo amigo)
+            if (strongestPlayer.power > 0 && strongestPlayer.power > strongestEnemy.power) {
+                priority = 60 + strongestPlayer.power; // Quanto mais forte a carta, melhor
+                console.log(`[IA] Scorch: Prioridade ${priority} (destruir carta de ${strongestPlayer.power} poder)`);
+            } else if (strongestPlayer.power > 0 && strongestPlayer.power === strongestEnemy.power) {
+                priority = 5; // Muito baixa - troca desvantajosa
+                console.log(`[IA] Scorch: Prioridade 5 (empate de poder - evitando)`);
+            } else {
+                priority = 0; // Não jogar - fogo amigo
+                console.log(`[IA] Scorch: Prioridade 0 (evitando fogo amigo)`);
+            }
+        }
+
+        // ------------------------------------------
+        // CARTAS CLIMÁTICAS
+        // ------------------------------------------
+        else if (card.type === 'weather') {
+            // Avaliar se o clima beneficiaria mais o inimigo
+            // Por agora, prioridade baixa
+            priority = 10;
+            console.log(`[IA] Clima ${card.name}: Prioridade 10`);
+        }
+
+        // ------------------------------------------
+        // HERÓIS E UNIDADES PADRÃO
+        // ------------------------------------------
+        else {
+            // Heróis: imunes a clima, alta prioridade se clima ativo
+            if (card.isHero) {
+                if (activeWeather.frost || activeWeather.fog || activeWeather.rain) {
+                    priority = card.power + 20; // Bônus em clima
+                    console.log(`[IA] Herói ${card.name}: Prioridade ${priority} (imune ao clima)`);
+                } else {
+                    priority = card.power + 10;
+                    console.log(`[IA] Herói ${card.name}: Prioridade ${priority}`);
+                }
+            } else {
+                // Unidades normais
+                priority = card.power;
+                
+                // Penalizar se a fileira está com clima
+                const rowType = card.row === 'all' ? getBestRowForAgile() : card.type;
+                const weatherMap = { melee: 'frost', ranged: 'fog', siege: 'rain' };
+                if (activeWeather[weatherMap[rowType]]) {
+                    priority = Math.max(1, priority - 3); // Reduzir prioridade
+                    console.log(`[IA] ${card.name}: Prioridade ${priority} (penalizado por clima)`);
+                } else {
+                    console.log(`[IA] ${card.name}: Prioridade ${priority}`);
+                }
+                
+                // Guardar row override para cartas Agile
+                if (card.row === 'all') {
+                    rowOverride = rowType;
+                }
+            }
+        }
+
+        // Atualizar melhor carta
         if (priority > maxPriority) {
             maxPriority = priority;
             bestCardIndex = index;
-            bestTargetForDecoy = decoyTarget;
+            bestDecoyTarget = decoyTarget;
+            bestRowOverride = rowOverride;
         }
     });
 
-    // 4. Execute Play
-    if (bestCardIndex === -1 || maxPriority === 0) {
-        // No good moves? Pass or play random low value?
-        // If we have cards but priority is 0 (e.g. only Decoy with no target), we might be forced to pass or burn a card.
-        // Let's try to play the lowest power card if we can't find a "good" move, or pass if we are winning.
+    // ==========================================
+    // EXECUTAR A JOGADA
+    // ==========================================
+
+    // Fallback: se não encontrou boa jogada
+    if (bestCardIndex === -1 || maxPriority <= 0) {
+        // Se está ganhando, passar
         if (scores.totalOpponent > scores.totalPlayer) {
-            console.log("IA: Sem boas jogadas e ganhando. Passar.");
+            console.log("[IA] Sem boas jogadas e ganhando. Passando.");
             passTurn('opponent');
             return;
-        } else {
-            // Play random (fallback) to avoid getting stuck
-            console.log("IA: Sem jogadas prioritárias. Jogando aleatório.");
-            bestCardIndex = Math.floor(Math.random() * enemyHand.length);
         }
+        // Senão, jogar a carta de menor valor (economizar as boas)
+        let minPower = Infinity;
+        enemyHand.forEach((card, index) => {
+            if (card.ability !== 'decoy' && card.power < minPower) {
+                minPower = card.power;
+                bestCardIndex = index;
+            }
+        });
+        // Se só tem Decoy sem alvo, forçar passar
+        if (bestCardIndex === -1) {
+            console.log("[IA] Apenas Decoy sem alvo. Passando.");
+            passTurn('opponent');
+            return;
+        }
+        console.log("[IA] Jogando carta de menor valor como fallback.");
     }
 
     const cardToPlay = enemyHand[bestCardIndex];
+    console.log(`[IA] >>> Jogando: ${cardToPlay.name} (Prioridade: ${maxPriority})`);
     
-    // Remove from hand
+    // Remover da mão
     enemyHand.splice(bestCardIndex, 1);
     updateEnemyHandUI();
 
-    // Handle Decoy Special Case
-    if (cardToPlay.ability === 'decoy' && bestTargetForDecoy) {
-        console.log(`IA jogou Decoy em ${bestTargetForDecoy.dataset.name}`);
+    // ------------------------------------------
+    // EXECUTAR DECOY
+    // ------------------------------------------
+    if (cardToPlay.ability === 'decoy' && bestDecoyTarget) {
+        console.log(`[IA] Decoy ativado em: ${bestDecoyTarget.dataset.name}`);
         
-        // 1. Return Target to Enemy Hand (Logic only, no UI needed for enemy hand really, but we update array)
+        // 1. Devolver alvo para a mão do inimigo
         const returnedCardObj = {
-            id: bestTargetForDecoy.dataset.id,
-            name: bestTargetForDecoy.dataset.name,
-            type: bestTargetForDecoy.dataset.type,
-            power: parseInt(bestTargetForDecoy.dataset.basePower),
-            ability: bestTargetForDecoy.dataset.ability,
-            isHero: bestTargetForDecoy.dataset.isHero === "true",
-            partner: bestTargetForDecoy.dataset.partner,
-            row: bestTargetForDecoy.dataset.row
+            id: bestDecoyTarget.dataset.id,
+            name: bestDecoyTarget.dataset.name,
+            type: bestDecoyTarget.dataset.type,
+            power: parseInt(bestDecoyTarget.dataset.basePower),
+            ability: bestDecoyTarget.dataset.ability,
+            isHero: bestDecoyTarget.dataset.isHero === "true",
+            partner: bestDecoyTarget.dataset.partner,
+            row: bestDecoyTarget.dataset.row
         };
         enemyHand.push(returnedCardObj);
         updateEnemyHandUI();
 
-        // 2. Replace on Board
+        // 2. Colocar Decoy no lugar
         const decoyElement = createCardElement(cardToPlay);
         decoyElement.draggable = false;
         
-        const parent = bestTargetForDecoy.parentNode;
-        parent.insertBefore(decoyElement, bestTargetForDecoy);
-        bestTargetForDecoy.remove();
+        const parent = bestDecoyTarget.parentNode;
+        parent.insertBefore(decoyElement, bestDecoyTarget);
+        bestDecoyTarget.remove();
         
         updateScore();
         return;
     }
 
-    // Standard Play Logic
-    let targetRow = null;
+    // ------------------------------------------
+    // EXECUTAR JOGADA PADRÃO
+    // ------------------------------------------
+    let targetContainer = null;
+    
     if (cardToPlay.type === 'weather') {
-        targetRow = document.querySelector('.row.opponent'); 
-    } else {
-        // Handle Agile (row: 'all') for AI - Prefer Melee for now or random?
-        // Let's default to Melee for Agile units if type is generic, or use their default type
-        let type = cardToPlay.type;
-        if (cardToPlay.row === 'all') {
-            type = 'melee'; // AI default preference
-        }
-        targetRow = document.querySelector(`.row.opponent[data-type="${type}"] .cards-container`);
-    }
-
-    if (targetRow) {
+        // Clima não vai para o tabuleiro, apenas ativa o efeito
         const cardElement = createCardElement(cardToPlay);
+        const dummyRow = document.querySelector('.row.opponent');
+        triggerAbility(cardElement, dummyRow);
+        enemyGraveyard.push(cardToPlay);
+        console.log(`[IA] Clima ativado: ${cardToPlay.name}`);
+    } else {
+        // Determinar fileira alvo
+        let rowType = cardToPlay.type;
+        if (cardToPlay.row === 'all') {
+            rowType = bestRowOverride || getBestRowForAgile();
+        }
         
-        if (cardToPlay.type === 'weather') {
-             triggerAbility(cardElement, targetRow);
-             enemyGraveyard.push(cardToPlay);
-             console.log(`Inimigo jogou Clima: ${cardToPlay.name}`);
-        } else {
+        targetContainer = document.querySelector(`.row.opponent[data-type="${rowType}"] .cards-container`);
+        
+        if (targetContainer) {
+            const cardElement = createCardElement(cardToPlay);
             cardElement.draggable = false;
-            targetRow.appendChild(cardElement);
-            triggerAbility(cardElement, targetRow);
-            console.log(`Inimigo jogou: ${cardToPlay.name}`);
+            targetContainer.appendChild(cardElement);
+            
+            // Ativar habilidade
+            const row = targetContainer.closest('.row');
+            triggerAbility(cardElement, row);
+            
+            console.log(`[IA] Carta jogada: ${cardToPlay.name} na fileira ${rowType}`);
         }
     }
 
