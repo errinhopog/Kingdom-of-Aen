@@ -51,14 +51,14 @@ const CARD_COLLECTION = [
     // =========================================
     
     // Daniel x3 (Bond Partner com Gabriel)
-    { id: 'daniel_1', baseId: 'daniel', name: 'Daniel', type: 'melee', power: 2, img: 'assets/daniel.png', ability: 'bond_partner', partner: 'Gabriel', category: 'unit' },
-    { id: 'daniel_2', baseId: 'daniel', name: 'Daniel', type: 'melee', power: 2, img: 'assets/daniel.png', ability: 'bond_partner', partner: 'Gabriel', category: 'unit' },
-    { id: 'daniel_3', baseId: 'daniel', name: 'Daniel', type: 'melee', power: 2, img: 'assets/daniel.png', ability: 'bond_partner', partner: 'Gabriel', category: 'unit' },
+    { id: 'daniel_1', baseId: 'daniel', name: 'Daniel', type: 'melee', power: 2, img: 'img/personagens/Daniel.png', ability: 'bond_partner', partner: 'Gabriel', category: 'unit' },
+    { id: 'daniel_2', baseId: 'daniel', name: 'Daniel', type: 'melee', power: 2, img: 'img/personagens/Daniel.png', ability: 'bond_partner', partner: 'Gabriel', category: 'unit' },
+    { id: 'daniel_3', baseId: 'daniel', name: 'Daniel', type: 'melee', power: 2, img: 'img/personagens/Daniel.png', ability: 'bond_partner', partner: 'Gabriel', category: 'unit' },
     
     // Gabriel x3 (Bond Partner com Daniel)
-    { id: 'gabriel_1', baseId: 'gabriel', name: 'Gabriel', type: 'melee', power: 2, img: 'assets/gabriel.png', ability: 'bond_partner', partner: 'Daniel', category: 'unit' },
-    { id: 'gabriel_2', baseId: 'gabriel', name: 'Gabriel', type: 'melee', power: 2, img: 'assets/gabriel.png', ability: 'bond_partner', partner: 'Daniel', category: 'unit' },
-    { id: 'gabriel_3', baseId: 'gabriel', name: 'Gabriel', type: 'melee', power: 2, img: 'assets/gabriel.png', ability: 'bond_partner', partner: 'Daniel', category: 'unit' },
+    { id: 'gabriel_1', baseId: 'gabriel', name: 'Gabriel', type: 'melee', power: 2, img: 'img/personagens/Gabriel.png', ability: 'bond_partner', partner: 'Daniel', category: 'unit' },
+    { id: 'gabriel_2', baseId: 'gabriel', name: 'Gabriel', type: 'melee', power: 2, img: 'img/personagens/Gabriel.png', ability: 'bond_partner', partner: 'Daniel', category: 'unit' },
+    { id: 'gabriel_3', baseId: 'gabriel', name: 'Gabriel', type: 'melee', power: 2, img: 'img/personagens/Gabriel.png', ability: 'bond_partner', partner: 'Daniel', category: 'unit' },
 
     // =========================================
     // MELEE - INFANTARIA (2 Cópias cada)
@@ -69,8 +69,8 @@ const CARD_COLLECTION = [
     { id: 'vanessa_1', baseId: 'vanessa', name: 'Vanessa', type: 'melee', power: 3, img: 'assets/vanessa.png', category: 'unit' },
     { id: 'vanessa_2', baseId: 'vanessa', name: 'Vanessa', type: 'melee', power: 3, img: 'assets/vanessa.png', category: 'unit' },
     
-    { id: 'wellington_1', baseId: 'wellington', name: 'Wellington O Gigante', type: 'melee', power: 6, img: 'assets/wellington.png', category: 'unit' },
-    { id: 'wellington_2', baseId: 'wellington', name: 'Wellington O Gigante', type: 'melee', power: 6, img: 'assets/wellington.png', category: 'unit' },
+    { id: 'wellington_1', baseId: 'wellington', name: 'Wellington O Gigante', type: 'melee', power: 6, img: 'img/personagens/Wellington.png', category: 'unit' },
+    { id: 'wellington_2', baseId: 'wellington', name: 'Wellington O Gigante', type: 'melee', power: 6, img: 'img/personagens/Wellington.png', category: 'unit' },
     
     { id: 'pattenberg_1', baseId: 'pattenberg', name: 'Pattenberg', type: 'melee', power: 6, img: 'assets/pattenberg.png', category: 'unit' },
     { id: 'pattenberg_2', baseId: 'pattenberg', name: 'Pattenberg', type: 'melee', power: 6, img: 'assets/pattenberg.png', category: 'unit' },
@@ -82,15 +82,15 @@ const CARD_COLLECTION = [
     { id: 'marcelo_2', baseId: 'marcelo', name: 'Marcelo', type: 'ranged', power: 5, img: 'assets/marcelo.png', ability: 'bond_partner', partner: 'Suelly', category: 'unit' },
     { id: 'marcelo_3', baseId: 'marcelo', name: 'Marcelo', type: 'ranged', power: 5, img: 'assets/marcelo.png', ability: 'bond_partner', partner: 'Suelly', category: 'unit' },
     
-    { id: 'suelly_1', baseId: 'suelly', name: 'Suelly', type: 'ranged', power: 2, img: 'assets/suelly.png', ability: 'bond_partner', partner: 'Marcelo', category: 'unit' },
-    { id: 'suelly_2', baseId: 'suelly', name: 'Suelly', type: 'ranged', power: 2, img: 'assets/suelly.png', ability: 'bond_partner', partner: 'Marcelo', category: 'unit' },
-    { id: 'suelly_3', baseId: 'suelly', name: 'Suelly', type: 'ranged', power: 2, img: 'assets/suelly.png', ability: 'bond_partner', partner: 'Marcelo', category: 'unit' },
+    { id: 'suelly_1', baseId: 'suelly', name: 'Suelly', type: 'ranged', power: 2, img: 'img/personagens/Suelly.png', ability: 'bond_partner', partner: 'Marcelo', category: 'unit' },
+    { id: 'suelly_2', baseId: 'suelly', name: 'Suelly', type: 'ranged', power: 2, img: 'img/personagens/Suelly.png', ability: 'bond_partner', partner: 'Marcelo', category: 'unit' },
+    { id: 'suelly_3', baseId: 'suelly', name: 'Suelly', type: 'ranged', power: 2, img: 'img/personagens/Suelly.png', ability: 'bond_partner', partner: 'Marcelo', category: 'unit' },
 
     // =========================================
     // RANGED - SUPORTE (2 Cópias cada)
     // =========================================
-    { id: 'adr14no_1', baseId: 'adr14no', name: 'Adr14no', type: 'ranged', power: 5, img: 'assets/adr14no.png', category: 'unit' },
-    { id: 'adr14no_2', baseId: 'adr14no', name: 'Adr14no', type: 'ranged', power: 5, img: 'assets/adr14no.png', category: 'unit' },
+    { id: 'adr14no_1', baseId: 'adr14no', name: 'Adr14no', type: 'ranged', power: 5, img: 'img/personagens/Adriano.png', category: 'unit' },
+    { id: 'adr14no_2', baseId: 'adr14no', name: 'Adr14no', type: 'ranged', power: 5, img: 'img/personagens/Adriano.png', category: 'unit' },
     
     { id: 'clarice_1', baseId: 'clarice', name: 'Clarice', type: 'ranged', power: 4, img: 'assets/clarice.png', category: 'unit' },
     { id: 'clarice_2', baseId: 'clarice', name: 'Clarice', type: 'ranged', power: 4, img: 'assets/clarice.png', category: 'unit' },
@@ -98,8 +98,8 @@ const CARD_COLLECTION = [
     { id: 'jacy_1', baseId: 'jacy', name: 'Jacy', type: 'ranged', power: 3, img: 'assets/jacy.png', category: 'unit' },
     { id: 'jacy_2', baseId: 'jacy', name: 'Jacy', type: 'ranged', power: 3, img: 'assets/jacy.png', category: 'unit' },
     
-    { id: 'thiago_1', baseId: 'thiago', name: 'Thiago', type: 'ranged', power: 2, img: 'assets/thiago.png', category: 'unit' },
-    { id: 'thiago_2', baseId: 'thiago', name: 'Thiago', type: 'ranged', power: 2, img: 'assets/thiago.png', category: 'unit' },
+    { id: 'thiago_1', baseId: 'thiago', name: 'Thiago', type: 'ranged', power: 2, img: 'img/personagens/Thiago.png', category: 'unit' },
+    { id: 'thiago_2', baseId: 'thiago', name: 'Thiago', type: 'ranged', power: 2, img: 'img/personagens/Thiago.png', category: 'unit' },
     
     { id: 'kariel_1', baseId: 'kariel', name: 'Kariel', type: 'ranged', power: 2, img: 'assets/kariel.png', category: 'unit' },
     { id: 'kariel_2', baseId: 'kariel', name: 'Kariel', type: 'ranged', power: 2, img: 'assets/kariel.png', category: 'unit' },
@@ -124,14 +124,14 @@ const CARD_COLLECTION = [
     // =========================================
     // ESPECIAIS - AGILE (Row: 'all')
     // =========================================
-    { id: 'geleia_1', baseId: 'geleia', name: 'Geleia Espião', type: 'melee', row: 'all', power: 3, img: 'assets/geleia.png', ability: 'spy_medic', category: 'special' },
-    { id: 'corredores_1', baseId: 'corredores', name: 'Corredores Espião', type: 'melee', row: 'all', power: 5, img: 'assets/corredores.png', ability: 'spy_medic', category: 'special' },
+    { id: 'geleia_1', baseId: 'geleia', name: 'Geleia Espião', type: 'melee', row: 'all', power: 3, img: 'img/personagens/Geleia.png', ability: 'spy_medic', category: 'special' },
+    { id: 'corredores_1', baseId: 'corredores', name: 'Corredores Espião', type: 'melee', row: 'all', power: 5, img: 'img/personagens/Corredores.png', ability: 'spy_medic', category: 'special' },
     
-    { id: 'cozinheiros_1', baseId: 'cozinheiros', name: 'Cozinheiros', type: 'melee', row: 'all', power: 3, img: 'assets/cozinheiros.png', category: 'unit' },
-    { id: 'cozinheiros_2', baseId: 'cozinheiros', name: 'Cozinheiros', type: 'melee', row: 'all', power: 3, img: 'assets/cozinheiros.png', category: 'unit' },
+    { id: 'cozinheiros_1', baseId: 'cozinheiros', name: 'Cozinheiros', type: 'melee', row: 'all', power: 3, img: 'img/personagens/Cozinheiros.png', category: 'unit' },
+    { id: 'cozinheiros_2', baseId: 'cozinheiros', name: 'Cozinheiros', type: 'melee', row: 'all', power: 3, img: 'img/personagens/Cozinheiros.png', category: 'unit' },
     
-    { id: 'espantalho_1', baseId: 'espantalho', name: 'Espantalho', type: 'melee', row: 'all', power: 0, img: 'assets/decoy.png', ability: 'decoy', category: 'special' },
-    { id: 'espantalho_2', baseId: 'espantalho', name: 'Espantalho', type: 'melee', row: 'all', power: 0, img: 'assets/decoy.png', ability: 'decoy', category: 'special' }
+    { id: 'espantalho_1', baseId: 'espantalho', name: 'Espantalho', type: 'melee', row: 'all', power: 0, img: 'img/personagens/Espantalho.png', ability: 'decoy', category: 'special' },
+    { id: 'espantalho_2', baseId: 'espantalho', name: 'Espantalho', type: 'melee', row: 'all', power: 0, img: 'img/personagens/Espantalho.png', ability: 'decoy', category: 'special' }
 ];
 
 // ============================================

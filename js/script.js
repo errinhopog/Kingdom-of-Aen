@@ -1,5 +1,28 @@
 // cardDatabase is now loaded from cards.js as allCardsData
 
+// ============================================
+// ===       MAPEAMENTO DE ÍCONES          ===
+// ============================================
+const ROW_ICONS = {
+    'melee': 'img/icons/icon-melee.png',
+    'ranged': 'img/icons/icon-ranged.png',
+    'siege': 'img/icons/icon-siege.png',
+    'agile': 'img/icons/icon-agile.png'
+};
+
+// Mapeamento de habilidades para descrições curtas
+const ABILITY_DESCRIPTIONS = {
+    'bond_partner': 'Dobra força com parceiro',
+    'spy': 'Espião: Compra 2 cartas',
+    'spy_medic': 'Espião: Compra 2 cartas',
+    'medic': 'Revive uma carta',
+    'scorch': 'Queima a mais forte',
+    'decoy': 'Retorna carta à mão',
+    'hero': 'Imune a efeitos',
+    'weather': 'Aplica clima',
+    'clear_weather': 'Limpa todo clima'
+};
+
 // Game State
 let activeWeather = { frost: false, fog: false, rain: false };
 let enemyHand = [];
@@ -405,65 +428,84 @@ function renderHand() {
 function createCardElement(card) {
     const el = document.createElement('div');
     el.classList.add('card');
-    el.draggable = true; // Enable native drag
+    el.draggable = true;
+    
+    // Data attributes
     el.dataset.id = card.id;
     el.dataset.type = card.type; // melee, ranged, siege
-    el.dataset.category = card.category || "unit"; // unit ou special
-    el.dataset.power = card.power; // Current power
-    el.dataset.basePower = card.power; // Original power for resets/calculations
+    el.dataset.category = card.category || "unit";
+    el.dataset.power = card.power;
+    el.dataset.basePower = card.power;
     el.dataset.name = card.name;
     el.dataset.ability = card.ability || "none";
     el.dataset.isHero = card.isHero || "false";
     if (card.partner) el.dataset.partner = card.partner;
-    // Para cartas agile (row: 'all'), permite jogar em qualquer fileira
     if (card.row === 'all') el.dataset.agile = "true";
 
-    if (card.isHero) {
-        el.classList.add('hero-card');
+    // Classes especiais
+    if (card.isHero) el.classList.add('hero-card');
+    if (card.ability === 'spy' || card.ability === 'spy_medic') el.classList.add('spy-card');
+    if (card.row === 'all') el.classList.add('agile-card');
+
+    // ========================================
+    // NOVA ESTRUTURA VISUAL DA CARTA
+    // ========================================
+    
+    // Imagem de fundo do personagem
+    if (card.img) {
+        el.style.backgroundImage = `url('${card.img}')`;
     }
     
-    // Estilo para spy
-    if (card.ability === 'spy' || card.ability === 'spy_medic') {
-        el.classList.add('spy-card');
-    }
-
-    // Power Badge
-    const power = document.createElement('div');
-    power.classList.add('card-power');
-    power.textContent = card.power;
-    el.appendChild(power);
-
-    // Image Placeholder
-    const img = document.createElement('div');
-    img.classList.add('card-img');
-    // img.style.backgroundImage = `url(${card.img})`; 
-    el.appendChild(img);
-
-    // Name
-    const name = document.createElement('div');
-    name.classList.add('card-name');
-    name.textContent = card.name;
-    el.appendChild(name);
-
-    // Ability Icon (Optional visual indicator)
-    if (card.ability && card.ability !== "none") {
-        const abilityIcon = document.createElement('div');
-        abilityIcon.classList.add('card-ability-icon');
-        if (card.ability === 'spy' || card.ability === 'spy_medic') {
-            abilityIcon.textContent = "👁️"; // Eye for Spy
-        } else if (card.ability === 'scorch') {
-            abilityIcon.textContent = "🔥"; // Fire for Scorch
-        } else if (card.ability === 'medic') {
-            abilityIcon.textContent = "⚕️"; // Medical symbol
-        } else if (card.ability === 'bond_partner') {
-            abilityIcon.textContent = "🤝"; // Handshake for Bond
-        } else if (card.ability === 'decoy') {
-            abilityIcon.textContent = "🔄"; // Arrows for Decoy
-        } else {
-            abilityIcon.textContent = "★"; // Star for others
+    // Overlay escuro para legibilidade
+    const overlay = document.createElement('div');
+    overlay.classList.add('card-overlay');
+    el.appendChild(overlay);
+    
+    // Badge de Força (canto superior esquerdo)
+    const strengthBadge = document.createElement('div');
+    strengthBadge.classList.add('card-strength-badge');
+    strengthBadge.textContent = card.power;
+    el.appendChild(strengthBadge);
+    
+    // Container de informações (parte inferior)
+    const infoContainer = document.createElement('div');
+    infoContainer.classList.add('card-info-container');
+    
+    // Nome da carta (banner amarelo)
+    const nameDiv = document.createElement('div');
+    nameDiv.classList.add('card-name');
+    nameDiv.textContent = card.name;
+    infoContainer.appendChild(nameDiv);
+    
+    // Descrição/Habilidade (banner laranja)
+    const descDiv = document.createElement('div');
+    descDiv.classList.add('card-desc');
+    if (card.ability && card.ability !== 'none') {
+        let descText = ABILITY_DESCRIPTIONS[card.ability] || '';
+        if (card.ability === 'bond_partner' && card.partner) {
+            descText = `Bond: ${card.partner}`;
         }
-        el.appendChild(abilityIcon);
+        descDiv.textContent = descText;
+    } else {
+        descDiv.textContent = card.type.charAt(0).toUpperCase() + card.type.slice(1);
     }
+    infoContainer.appendChild(descDiv);
+    
+    el.appendChild(infoContainer);
+    
+    // Ícone da Fileira (canto inferior direito)
+    const rowIconImg = document.createElement('img');
+    rowIconImg.classList.add('card-row-icon-img');
+    
+    // Determinar qual ícone usar
+    let iconKey = card.type; // melee, ranged, siege
+    if (card.row === 'all') {
+        iconKey = 'agile';
+    }
+    rowIconImg.src = ROW_ICONS[iconKey] || ROW_ICONS['melee'];
+    rowIconImg.alt = `Ícone ${iconKey}`;
+    rowIconImg.draggable = false;
+    el.appendChild(rowIconImg);
 
     // Drag Events
     el.addEventListener('dragstart', dragStart);
