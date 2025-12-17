@@ -619,9 +619,15 @@ function createCardElement(card) {
         // 4. Update Game State
         updateScore();
 
-        // 5. Trigger Enemy Turn
+        // 5. Trigger Enemy Turn (apenas UMA carta)
         if (!enemyPassed) {
-            enemyTurnLoop();
+            isProcessingTurn = true;
+            updateTurnVisuals();
+            setTimeout(() => {
+                enemyTurn();
+                isProcessingTurn = false;
+                updateTurnVisuals();
+            }, 1500);
         }
     });
 
@@ -1928,9 +1934,15 @@ function drop(e) {
                 // Update Score (Weather effect applied)
                 updateScore();
 
-                // Trigger Enemy Turn
+                // Trigger Enemy Turn (apenas UMA carta)
                 if (!enemyPassed) {
-                    enemyTurnLoop();
+                    isProcessingTurn = true;
+                    updateTurnVisuals();
+                    setTimeout(() => {
+                        enemyTurn();
+                        isProcessingTurn = false;
+                        updateTurnVisuals();
+                    }, 1500);
                 }
             } else {
                 // Move card to the row's card container
@@ -1968,9 +1980,15 @@ function drop(e) {
                     }, 1000); // Wait for animation/effect
                 }
 
-                // Trigger Enemy Turn
+                // Trigger Enemy Turn (apenas UMA carta)
                 if (!enemyPassed) {
-                    enemyTurnLoop();
+                    isProcessingTurn = true;
+                    updateTurnVisuals();
+                    setTimeout(() => {
+                        enemyTurn();
+                        isProcessingTurn = false;
+                        updateTurnVisuals();
+                    }, 1500);
                 }
             }
         }
