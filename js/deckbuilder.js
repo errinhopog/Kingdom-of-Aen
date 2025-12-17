@@ -95,7 +95,7 @@ function createBuilderCard(card) {
     const abilityIcon = abilityIcons[card.ability] || '';
     
     div.innerHTML = `
-        ${card.category !== 'special' || card.power > 0 ? `<div class="card-power">${card.power}</div>` : ''}
+        ${card.category !== 'special' || card.power > 0 ? `<div class="card-strength-badge">${card.power}</div>` : ''}
         <div class="row-icon">${rowIcon}</div>
         <div class="card-img-placeholder"></div>
         <div class="card-name">${card.name}</div>
@@ -150,7 +150,7 @@ function createDeckCard(card) {
     }
     
     div.innerHTML = `
-        ${card.category !== 'special' || card.power > 0 ? `<div class="card-power">${card.power}</div>` : ''}
+        ${card.category !== 'special' || card.power > 0 ? `<div class="card-strength-badge">${card.power}</div>` : ''}
         <div class="card-name">${card.name}</div>
         <div class="remove-hint">✕</div>
     `;

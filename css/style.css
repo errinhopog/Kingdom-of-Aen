@@ -1148,8 +1148,7 @@ img {
     box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
 }
 
-/* Power Badge no Builder */
-.builder-card .card-power {
+.builder-card .card-strength-badge {
     position: absolute;
     top: 4px;
     left: 4px;
@@ -1244,7 +1243,7 @@ img {
     box-shadow: 0 0 10px rgba(241, 196, 15, 0.4);
 }
 
-.builder-card.hero .card-power {
+.builder-card.hero .card-strength-badge {
     background: linear-gradient(145deg, #f1c40f, #d4ac0d);
     color: #1a1a1a;
     border-color: #7d6608;
@@ -1272,7 +1271,7 @@ img {
     transform: scale(1.02);
 }
 
-.deck-card .card-power {
+.deck-card .card-strength-badge {
     position: absolute;
     top: 3px;
     left: 3px;

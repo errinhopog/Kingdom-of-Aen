@@ -81,17 +81,36 @@ function initializeGame() {
 function initializeGameWithDeck(deckIds) {
     console.log("=== INICIANDO JOGO COM DECK ===");
     console.log("Deck IDs:", deckIds);
-    
+
     // 1. Converter IDs para objetos de carta e embaralhar
-    playerDeck = shuffleArray(idsToCards(deckIds));
-    console.log("Deck embaralhado:", playerDeck.length, "cartas");
-    
-    // 2. Criar deck do inimigo (usa toda coleção embaralhada - filtra por category)
-    const enemyDeckIds = CARD_COLLECTION
+    let convertedPlayerCards = [];
+    if (typeof idsToCards === 'function') {
+        convertedPlayerCards = idsToCards(deckIds);
+    } else {
+        // Fallback: map IDs against allCardsData
+        convertedPlayerCards = deckIds.map(id => allCardsData.find(c => c.id === id)).filter(Boolean);
+        console.warn('[DEBUG initializeGameWithDeck] idsToCards() not found — using fallback mapping.');
+    }
+    playerDeck = shuffleArray(convertedPlayerCards || []);
+    console.log("Deck embaralhado (player):", playerDeck.length, "cartas");
+
+    // 2. Criar deck do inimigo (usa CARD_COLLECTION se disponível, senão allCardsData)
+    const sourceCollection = (typeof CARD_COLLECTION !== 'undefined') ? CARD_COLLECTION : allCardsData;
+    if (typeof CARD_COLLECTION === 'undefined') {
+        console.warn('[DEBUG initializeGameWithDeck] CARD_COLLECTION not defined — falling back to allCardsData for enemy deck.');
+    }
+    const enemyDeckIds = (sourceCollection || [])
         .filter(c => c.category === 'unit') // Só unidades para simplificar
         .map(c => c.id);
-    enemyDeck = shuffleArray(idsToCards(enemyDeckIds));
-    console.log("Deck inimigo:", enemyDeck.length, "cartas");
+
+    let convertedEnemyCards = [];
+    if (typeof idsToCards === 'function') {
+        convertedEnemyCards = idsToCards(enemyDeckIds);
+    } else {
+        convertedEnemyCards = enemyDeckIds.map(id => (sourceCollection || allCardsData).find(c => c.id === id)).filter(Boolean);
+    }
+    enemyDeck = shuffleArray(convertedEnemyCards || []);
+    console.log("Deck inimigo (built):", enemyDeck.length, "cartas");
     
     // 3. Comprar 10 cartas para a mão do jogador
     const playerStartingHand = playerDeck.splice(0, 10);
@@ -102,6 +121,7 @@ function initializeGameWithDeck(deckIds) {
         ...card,
         id: `e${i}_${card.id}` // ID único
     }));
+    console.log('[DEBUG initializeGameWithDeck] enemyHand length after draw:', enemyHand.length);
     
     // 5. Inicializar Líderes
     initializeLeaders();
@@ -463,6 +483,7 @@ function createCardElement(card) {
     
     // Badge de Força (canto superior esquerdo)
     const strengthBadge = document.createElement('div');
+    // Visual badge for power (used by updateScore())
     strengthBadge.classList.add('card-strength-badge');
     strengthBadge.textContent = card.power;
     el.appendChild(strengthBadge);
@@ -600,13 +621,7 @@ function createCardElement(card) {
 
         // 5. Trigger Enemy Turn
         if (!enemyPassed) {
-            isProcessingTurn = true;
-            updateTurnVisuals();
-            setTimeout(() => {
-                enemyTurn();
-                isProcessingTurn = false;
-                updateTurnVisuals();
-            }, 1500);
+            enemyTurnLoop();
         }
     });
 
@@ -942,8 +957,13 @@ function updateScore() {
                 }
             }
 
-            // Update Visuals
-            const badge = card.querySelector('.card-power');
+            // Update Visuals - ensure badge exists (.card-strength-badge)
+            let badge = card.querySelector('.card-strength-badge');
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.classList.add('card-strength-badge');
+                card.appendChild(badge);
+            }
             badge.textContent = power;
             if (power > parseInt(card.dataset.basePower)) {
                 badge.classList.add('buffed');
@@ -1137,7 +1157,8 @@ function enemyTurn() {
     const totalCardsOnBoard = getTotalCardsOnBoard();
     const isEarlyGame = totalCardsOnBoard < 6;
     const scoreDifference = scores.totalOpponent - scores.totalPlayer;
-    
+
+    console.debug('[DEBUG enemyTurn] called', { enemyPassed, playerPassed, enemyHandLength: enemyHand.length, scores, playerHandCount, totalCardsOnBoard });
     console.log(`[IA] Pontuação: Inimigo ${scores.totalOpponent} vs Jogador ${scores.totalPlayer}`);
     console.log(`[IA] Cartas na mão: Inimigo ${enemyHand.length} vs Jogador ${playerHandCount}`);
 
@@ -1482,6 +1503,8 @@ function enemyTurn() {
             const row = targetContainer.closest('.row');
             triggerAbility(cardElement, row);
             
+            console.debug('[DEBUG enemyTurn] played card', { name: cardToPlay.name, type: cardToPlay.type, row: rowType });
+
             console.log(`[IA] Carta jogada: ${cardToPlay.name} na fileira ${rowType}`);
         }
     }
@@ -1520,14 +1543,18 @@ function updateTurnVisuals() {
 function enemyTurnLoop() {
     if (enemyPassed) return;
 
+    console.debug('[DEBUG enemyTurnLoop] starting loop iteration; enemyPassed=', enemyPassed);
+
     isProcessingTurn = true;
     updateTurnVisuals();
 
     setTimeout(() => {
         enemyTurn();
-        if (!enemyPassed && playerPassed) {
-            enemyTurnLoop(); // Continue playing if player passed
+        if (!enemyPassed) {
+            console.debug('[DEBUG enemyTurnLoop] scheduling next iteration (enemy still active)');
+            enemyTurnLoop(); // Continue playing until enemy passes
         } else {
+            console.debug('[DEBUG enemyTurnLoop] enemy passed — stopping loop');
             isProcessingTurn = false;
             updateTurnVisuals();
         }
@@ -1857,6 +1884,11 @@ function drop(e) {
 
     if (playerPassed || isProcessingTurn) return;
 
+    // Debug: card being dropped
+    const dbg_cardId = e.dataTransfer.getData('text/plain');
+    const dbg_cardType = e.dataTransfer.getData('card-type');
+    console.debug('[DEBUG drop] card dropped:', { id: dbg_cardId, type: dbg_cardType, row: row.dataset.type });
+
     // Retrieve data
     const cardId = e.dataTransfer.getData('text/plain');
     const cardType = e.dataTransfer.getData('card-type');
@@ -1898,13 +1930,7 @@ function drop(e) {
 
                 // Trigger Enemy Turn
                 if (!enemyPassed) {
-                    isProcessingTurn = true;
-                    updateTurnVisuals();
-                    setTimeout(() => {
-                        enemyTurn();
-                        isProcessingTurn = false;
-                        updateTurnVisuals();
-                    }, 1500);
+                    enemyTurnLoop();
                 }
             } else {
                 // Move card to the row's card container
@@ -1944,13 +1970,7 @@ function drop(e) {
 
                 // Trigger Enemy Turn
                 if (!enemyPassed) {
-                    isProcessingTurn = true;
-                    updateTurnVisuals();
-                    setTimeout(() => {
-                        enemyTurn();
-                        isProcessingTurn = false;
-                        updateTurnVisuals();
-                    }, 1500);
+                    enemyTurnLoop();
                 }
             }
         }
