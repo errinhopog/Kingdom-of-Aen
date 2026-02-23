@@ -4,16 +4,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kingdom of Aen - Gwent Clone</title>
+    <title>Kingdom of Aen — Jogo de Cartas Estratégico</title>
+    <meta name="description"
+        content="Kingdom of Aen é um jogo de cartas estratégico inspirado no Gwent. Monte seu deck e conquiste o reino!">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
     <!-- ============================================
+         CENA 0: MENU PRINCIPAL
+         ============================================ -->
+    <div id="scene-menu" class="scene active">
+        <div class="menu-container">
+            <div class="menu-bg-effects"></div>
+            <div class="menu-content">
+                <div class="menu-logo">
+                    <span class="menu-logo-icon">⚔️</span>
+                    <h1 class="menu-title">Kingdom of Aen</h1>
+                    <p class="menu-tagline">Um jogo de cartas estratégico</p>
+                </div>
+                <nav class="menu-buttons">
+                    <button id="menu-btn-play" class="menu-btn menu-btn-primary">
+                        <span class="menu-btn-icon">⚔️</span>
+                        <span class="menu-btn-text">Jogar</span>
+                    </button>
+                    <button id="menu-btn-settings" class="menu-btn">
+                        <span class="menu-btn-icon">⚙️</span>
+                        <span class="menu-btn-text">Configurações</span>
+                    </button>
+                    <button id="menu-btn-about" class="menu-btn">
+                        <span class="menu-btn-icon">📜</span>
+                        <span class="menu-btn-text">Sobre</span>
+                    </button>
+                </nav>
+                <p class="menu-version">v1.0 — Vanilla JS</p>
+            </div>
+            <div id="menu-toast" class="menu-toast"></div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         CENA 0.5: SELEÇÃO DE DECK
+         ============================================ -->
+    <div id="scene-deck-select" class="scene">
+        <div class="deck-select-container">
+            <header class="deck-select-header">
+                <h1 class="deck-select-title">⚔️ Escolha seu Exército</h1>
+                <p class="deck-select-subtitle">Selecione um deck pré-montado ou crie o seu</p>
+            </header>
+            <div class="deck-select-grid" id="deck-select-grid">
+                <!-- Rendered by menu.js -->
+            </div>
+            <footer class="deck-select-footer">
+                <button id="btn-back-to-menu" class="back-btn">← Voltar ao Menu</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- About Overlay -->
+    <div id="about-overlay" class="modal-overlay hidden">
+        <div class="modal-content about-modal">
+            <div class="modal-icon">📜</div>
+            <h1 class="modal-title">Kingdom of Aen</h1>
+            <p class="modal-subtitle">Um jogo de cartas estratégico inspirado no Gwent</p>
+            <div class="about-details">
+                <p>⚔️ 39 cartas únicas com 7 habilidades</p>
+                <p>🏰 4 líderes com poderes especiais</p>
+                <p>🎭 4 decks pré-montados temáticos</p>
+                <p>🤖 IA estratégica como oponente</p>
+                <p>💻 Feito com Vanilla HTML5, CSS3 e JavaScript</p>
+            </div>
+            <button id="btn-close-about" class="play-again-btn">
+                <span>✖️</span> Fechar
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================
          CENA 1: DECK BUILDER
          ============================================ -->
-    <div id="scene-builder" class="scene active">
+    <div id="scene-builder" class="scene">
         <div class="builder-container">
             <!-- Header do Builder -->
             <header class="builder-header">
@@ -72,13 +148,21 @@
                     <div class="stat-item stat-power">
                         <span class="stat-label">Poder Total</span>
                         <span class="stat-value" id="stat-power">0</span>
+                        <span class="stat-requirement">(máx. <span id="power-cap-display">100</span>)</span>
                     </div>
+                </div>
+                <div class="power-bar-container">
+                    <div class="power-bar-track">
+                        <div class="power-bar-fill" id="power-bar-fill" style="width: 0%"></div>
+                    </div>
+                    <span class="power-bar-label" id="power-bar-label">0 / 100</span>
                 </div>
                 <div class="builder-actions">
                     <div class="validation-message" id="validation-message"></div>
                     <button class="play-btn" id="start-game-btn" disabled>
                         <span>⚔️</span> INICIAR BATALHA
                     </button>
+                    <button class="back-btn" id="btn-builder-to-menu">← Voltar ao Menu</button>
                 </div>
             </footer>
         </div>
@@ -260,6 +344,9 @@
     <script src="js/ui/render.js"></script>
     <script src="js/ui/interactions.js"></script>
     <script src="js/ui/mulligan.js"></script>
+
+    <!-- Menu -->
+    <script src="js/menu.js"></script>
 
     <!-- Features -->
     <script src="js/deckbuilder.js"></script>

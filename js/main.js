@@ -127,7 +127,12 @@ function setupControls() {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // NÃO inicializar automaticamente - esperar pelo Deck Builder
+    // Inicializar o menu principal
+    if (typeof initMenu === 'function') {
+        initMenu();
+    }
+
+    // Configurar controles do jogo (para quando a batalha iniciar)
     setupDragAndDrop();
     setupControls();
     setupLeaders();

@@ -167,7 +167,8 @@ window.KoA = window.KoA || {};
     }
 
     function validateDeck(deckIds) {
-        const { units, specials } = countDeckComposition(deckIds);
+        const { units, specials, totalPower } = countDeckComposition(deckIds);
+        const powerCap = (typeof POWER_CAP !== 'undefined') ? POWER_CAP : 100;
 
         const errors = [];
         if (units < 22) {
@@ -176,8 +177,11 @@ window.KoA = window.KoA || {};
         if (specials > 10) {
             errors.push(`Máximo de 10 especiais permitido (atual: ${specials})`);
         }
+        if (totalPower > powerCap) {
+            errors.push(`Poder total excede o limite de ${powerCap} (atual: ${totalPower})`);
+        }
 
-        return { valid: errors.length === 0, errors, units, specials };
+        return { valid: errors.length === 0, errors, units, specials, totalPower };
     }
 
     function idsToCards(deckIds) {

@@ -1,8 +1,8 @@
 # 📜 Kingdom of Aen - Contexto Completo do Projeto
 
-> **Última atualização:** 14 de Janeiro de 2026  
+> **Última atualização:** 23 de Fevereiro de 2026  
 > **Autores:** Pedro Braga e Ramon  
-> **Versão:** 1.1.0
+> **Versão:** 2.1.0
 
 ---
 
@@ -19,9 +19,9 @@ O nome "Aen" é uma homenagem às iniciais de uma instituição (A.E.N.), recont
 | Tecnologia | Uso |
 |------------|-----|
 | **HTML5** | Estrutura das páginas (index.html) |
-| **CSS3** | Estilização completa (style.css - 2200+ linhas) |
+| **CSS3** | Estilização completa (style.css - 2468 linhas) |
 | **JavaScript (Vanilla ES6+)** | Toda a lógica do jogo |
-| **LocalStorage** | Persistência do deck do jogador |
+| **LocalStorage** | Persistência do deck do jogador e estado de áudio |
 | **Audio API** | Música de fundo e efeitos sonoros |
 | **Jest** | Framework de testes automatizados |
 
@@ -40,55 +40,91 @@ Kingdom-of-Aen-main/
 ├── .gitignore                # Configuração do Git
 │
 ├── css/
-│   └── style.css             # Todos os estilos (2200+ linhas)
+│   └── style.css             # Todos os estilos (2468 linhas)
 │                              # Inclui media queries para responsividade
 │
 ├── js/
-│   ├── main.js               # Inicialização do jogo
-│   ├── deckbuilder.js        # Sistema de construção de deck
+│   ├── main.js               # Inicialização do jogo (165 linhas)
+│   ├── deckbuilder.js        # Sistema de construção de deck (395 linhas)
+│   ├── app.js                # Ponto de entrada ES6 Module (NÃO carregado)
+│   │                          # Bridge de compatibilidade ES6 ↔ globals
 │   │
 │   ├── core/                 # Núcleo do motor do jogo
-│   │   ├── state.js          # Estado global (variáveis do jogo)
-│   │   ├── engine.js         # Motor de pontuação e turnos
-│   │   ├── ai.js             # Inteligência artificial do oponente
-│   │   ├── abilities.js      # Habilidades das cartas
-│   │   ├── leaders.js        # Sistema de líderes
-│   │   └── audio.js          # Gerenciador de áudio
+│   │   ├── state.js          # Estado global (variáveis do jogo) - IIFE
+│   │   ├── engine.js         # Motor de pontuação e turnos (438 linhas)
+│   │   ├── ai.js             # Inteligência artificial do oponente (491 linhas)
+│   │   ├── abilities.js      # Habilidades das cartas (309 linhas)
+│   │   ├── leaders.js        # Sistema de líderes (269 linhas)
+│   │   └── audio.js          # Gerenciador de áudio (classe AudioManager)
 │   │
 │   ├── ui/                   # Interface do usuário
-│   │   ├── render.js         # Renderização de cartas/elementos
-│   │   ├── interactions.js   # Drag and drop
-│   │   └── mulligan.js       # Fase de troca de cartas inicial
+│   │   ├── render.js         # Renderização de cartas/elementos (250 linhas)
+│   │   ├── interactions.js   # Drag and drop (201 linhas)
+│   │   └── mulligan.js       # Fase de troca de cartas inicial (239 linhas)
 │   │
 │   ├── data/
-│   │   └── cards.js          # Base de dados de todas as cartas
+│   │   └── cards.js          # Base de dados de todas as cartas (~35 cartas)
 │   │
 │   ├── modules/              # Versões ES6 Module (preparação futura)
-│   │   └── cards.module.js   # Versão modular de cards.js
+│   │   ├── cards.module.js   # Versão modular de cards.js
+│   │   └── helpers.module.js # Versão modular de helpers.js
 │   │
 │   └── utils/
-│       └── helpers.js        # Funções utilitárias (ES6 exports)
+│       └── helpers.js        # Funções utilitárias e constantes (IIFE)
 │
 ├── tests/                    # Testes automatizados (Jest)
-│   ├── cards.test.js         # Testes do sistema de cartas
-│   └── engine.test.js        # Testes do motor do jogo
+│   ├── cards.test.js         # Testes do sistema de cartas (170 linhas)
+│   └── engine.test.js        # Testes do motor do jogo (236 linhas)
 │
-├── audio/                    # Arquivos de áudio
+├── audio/                    # Arquivos de áudio (16 arquivos)
 │   ├── music_bg.mp3          # Música de fundo
-│   ├── card-place-*.ogg      # Sons de jogar carta
-│   └── ...                   # Outros efeitos sonoros
+│   ├── card-place-{1-4}.ogg  # Sons de jogar carta
+│   ├── card-slide-{1-2}.ogg  # Sons de deslizar carta
+│   ├── card-fan-{1-2}.ogg    # Sons de abrir cartas
+│   ├── card-shuffle.ogg      # Som de embaralhar
+│   ├── card-shove-1.ogg      # Som de empurrar carta
+│   ├── dice-throw-3.ogg      # Som de dado
+│   ├── die-throw-3.ogg       # Som de dado (variação)
+│   ├── mouseclick1.ogg       # Som de clique
+│   └── switch4.ogg           # Som de troca
 │
 └── img/
-    ├── personagens/          # Imagens das cartas com arte
+    ├── personagens/          # Imagens das cartas com arte (16 imagens)
     │   ├── Daniel.png, Gabriel.png, Wellington.png
     │   ├── Suelly.png, Adriano.png, Thiago.png
     │   ├── Geleia.png, Corredores.png, Cozinheiros.png
-    │   └── Espantalho.png
+    │   ├── Espantalho.png, Ana Rita.png, Carol.png
+    │   ├── Ciça.png, Marco.png, Paty.png
+    │   └── Renata.png
     └── icons/                # Ícones das fileiras
         ├── icon-melee.png
         ├── icon-ranged.png
         └── icon-siege.png
 ```
+
+---
+
+## 🔌 Arquitetura de Carregamento
+
+O `index.html` carrega os scripts via `<script>` tags (NÃO usa ES6 modules):
+
+```
+1. js/utils/helpers.js      ← Constantes e utilitários (IIFE → window.*)
+2. js/data/cards.js          ← Dados das cartas (IIFE → window.*)
+3. js/core/state.js          ← Estado global (IIFE → window.*)
+4. js/core/audio.js          ← AudioManager (classe global)
+5. js/core/abilities.js      ← Habilidades (funções globais)
+6. js/core/leaders.js        ← Líderes (funções globais)
+7. js/core/ai.js             ← IA (funções globais)
+8. js/core/engine.js         ← Motor do jogo (funções globais)
+9. js/ui/render.js           ← Renderização (funções globais)
+10. js/ui/interactions.js    ← Drag & Drop (funções globais)
+11. js/ui/mulligan.js        ← Mulligan (funções globais)
+12. js/deckbuilder.js        ← Deck Builder (funções globais)
+13. js/main.js               ← Inicialização (DOMContentLoaded)
+```
+
+> 📌 `js/app.js` existe mas **NÃO é carregado**. Serve como preparação futura para migração ES6 modules.
 
 ---
 
@@ -128,13 +164,14 @@ Kingdom-of-Aen-main/
     ability: 'bond_partner',  // Habilidade especial
     partner: 'Gabriel',       // Parceiro do vínculo
     category: 'unit',         // Categoria: unit | special
-    isHero: false            // Se é herói (imune a efeitos)
+    isHero: false,            // Se é herói (imune a efeitos)
+    row: 'all'                // (opcional) Se 'all', carta é ágil
 }
 ```
 
 ### Tipos de Fileiras
 | Tipo | Ícone | Clima que Afeta |
-|------|-------|-----------------|
+|------|-------|-----------------| 
 | **Melee** | ⚔️ | Frost (Geada) |
 | **Ranged** | 🏹 | Fog (Névoa) |
 | **Siege** | 🏰 | Rain (Chuva) |
@@ -201,7 +238,7 @@ audioManager.toggleMute();
 
 ## 💾 Estado Global (state.js)
 
-Variáveis globais que mantêm o estado do jogo:
+Variáveis globais que mantêm o estado do jogo (padrão IIFE com namespace `KoA`):
 
 ```javascript
 // Clima
@@ -230,40 +267,156 @@ let playerLeader = null;
 let enemyLeader = null;
 let playerLeaderUsed = false;
 let enemyLeaderUsed = false;
+
+// Mulligan
+let mulliganHand = [];
+let mulliganRedraws = 2;
 ```
 
 ---
 
-## 🔧 Funções Importantes
+## 🔧 Checklist Completo de Funções (96 funções/métodos)
 
-### Motor do Jogo (engine.js)
-```javascript
-updateScore()       // Recalcula pontuação de todas as fileiras
-passTurn(who)       // Passa o turno para 'player' ou 'opponent'
-checkEndRound()     // Verifica se ambos passaram
-endRound(winner)    // Finaliza rodada e atribui pontos
-prepareNextRound()  // Prepara para próxima rodada
-resetGame()         // Reseta completamente o jogo
-```
+### Utils — `helpers.js`
+| Função | Descrição |
+|--------|-----------|
+| `shuffleArray(array)` | Embaralha array (Fisher-Yates) |
 
-### Renderização (render.js)
-```javascript
-createCardElement(card)   // Cria elemento DOM de uma carta
-renderHand()              // Renderiza mão do jogador
-renderHandFromCards(arr)  // Renderiza mão a partir de array
-updateEnemyHandUI()       // Atualiza contador de cartas inimigas
-updateDeckCountUI()       // Atualiza contador do deck
-```
+### Dados — `cards.js`
+| Função | Descrição |
+|--------|-----------|
+| `getCardById(id)` | Busca carta por ID |
+| `getCardsByCategory(category)` | Filtra por categoria |
+| `getCardsByType(type)` | Filtra por tipo |
+| `countDeckComposition(deckIds)` | Conta unidades/especiais/poder |
+| `validateDeck(deckIds)` | Valida regras do deck |
+| `idsToCards(deckIds)` | Converte IDs para objetos |
 
-### Deck Builder (deckbuilder.js)
-```javascript
-initDeckBuilder()         // Inicializa o builder
-addCardToDeck(cardId)     // Adiciona carta ao deck
-removeCardFromDeck(cardId) // Remove carta do deck
-validateDeck(deckIds)     // Valida se deck está correto
-saveDeckToStorage()       // Salva no LocalStorage
-startBattle()             // Inicia a batalha
-```
+### Estado — `state.js`
+| Função | Descrição |
+|--------|-----------|
+| `resetGameState()` | Reseta todas as variáveis |
+| `resetRoundState()` | Reseta apenas a rodada |
+| `syncToGlobal()` | Sincroniza para `window.*` |
+
+### Áudio — `audio.js` (classe `AudioManager`)
+| Método | Descrição |
+|--------|-----------|
+| `constructor(basePath)` | Inicializa o gerenciador |
+| `_loadMuteState()` | Carrega mute do LocalStorage |
+| `_saveMuteState(muted)` | Salva mute |
+| `_preloadAll()` | Pré-carrega todos os SFX |
+| `playMusic(track)` | Inicia música de fundo |
+| `stopMusic()` | Para a música |
+| `playSFX(type)` | Toca efeito sonoro |
+| `toggleMute()` | Alterna mute geral |
+
+### Habilidades — `abilities.js`
+| Função | Descrição |
+|--------|-----------|
+| `triggerAbility(cardElement, rowElement)` | Dispara habilidade |
+| `applyWeather(type)` | Aplica efeito climático |
+| `clearWeather()` | Limpa todos os climas |
+| `updateWeatherVisuals()` | Atualiza visuais de clima |
+| `applyMedic(cardElement, currentRow)` | Revive carta |
+| `applySpy(cardElement, currentRow)` | Move para lado oposto |
+| `drawCard(who, count)` | Compra cartas do deck |
+| `applyScorch(cardElement, currentRow)` | Destrói cartas mais fortes |
+
+### Líderes — `leaders.js`
+| Função | Descrição |
+|--------|-----------|
+| `initializeLeaders()` | Inicializa líderes |
+| `renderLeaderCards()` | Renderiza na UI |
+| `getLeaderAbilityDescription(ability)` | Retorna descrição |
+| `setupLeaders()` | Configura eventos de clique |
+| `activateLeader(who)` | Ativa habilidade |
+| `executeLeaderAbility(ability, who)` | Executa habilidade |
+| `updateLeaderVisuals()` | Atualiza visuais |
+| `shouldEnemyUseLeader()` | IA decide uso do líder |
+
+### IA — `ai.js`
+| Função | Descrição |
+|--------|-----------|
+| `getPlayerHandCount()` | Conta cartas do jogador |
+| `isPartnerOnBoard(partnerName)` | Verifica parceiro no tabuleiro |
+| `isPartnerInHand(partnerName)` | Verifica parceiro na mão |
+| `findPlayerSpiesOnEnemySide()` | Encontra espiões do jogador |
+| `findDecoyTargets()` | Encontra alvos para Decoy |
+| `findStrongestPlayerCard()` | Carta mais forte do jogador |
+| `findStrongestEnemyCard()` | Carta mais forte do inimigo |
+| `getTotalCardsOnBoard()` | Total de cartas no tabuleiro |
+| `getBestRowForAgile()` | Melhor fileira para ágil |
+| `enemyTurn()` | Função principal da IA |
+
+### Motor — `engine.js`
+| Função | Descrição |
+|--------|-----------|
+| `updateScore()` | Recalcula pontuação |
+| `passTurn(who)` | Passa turno |
+| `updateTurnVisuals()` | Atualiza visuais de turno |
+| `enemyTurnLoop()` | Loop de turnos do inimigo |
+| `checkEndRound()` | Verifica fim de rodada |
+| `endRound(winner)` | Finaliza rodada |
+| `showRoundMessage(message)` | Mostra mensagem |
+| `showGameOverModal()` | Modal de fim de jogo |
+| `resetGame()` | Reseta jogo completo |
+| `updateGems(who, count)` | Atualiza gemas |
+| `prepareNextRound()` | Prepara próxima rodada |
+
+### Renderização — `render.js`
+| Função | Descrição |
+|--------|-----------|
+| `renderHand()` | Renderiza mão (usa allCardsData) |
+| `renderHandFromCards(cards)` | Renderiza mão de array |
+| `updateEnemyHandUI()` | Atualiza contador inimigo |
+| `updateDeckCountUI()` | Atualiza contador do deck |
+| `createCardElement(card)` | Cria elemento DOM de carta |
+
+### Interações — `interactions.js`
+| Função | Descrição |
+|--------|-----------|
+| `dragStart(e)` | Inicia drag |
+| `dragEnd(e)` | Finaliza drag |
+| `setupDragAndDrop()` | Configura drag nas fileiras |
+| `dragOver(e)` | Arrastar sobre fileira |
+| `dragLeave(e)` | Sair da fileira |
+| `drop(e)` | Soltar carta na fileira |
+
+### Mulligan — `mulligan.js`
+| Função | Descrição |
+|--------|-----------|
+| `startMulligan(playerHand)` | Inicia fase de mulligan |
+| `renderMulliganCards()` | Renderiza cartas |
+| `createMulliganCardElement(card, index)` | Cria carta no mulligan |
+| `redrawCard(index)` | Troca carta |
+| `finishMulligan()` | Finaliza e inicia jogo |
+
+### Deck Builder — `deckbuilder.js`
+| Função | Descrição |
+|--------|-----------|
+| `initDeckBuilder()` | Inicializa builder |
+| `renderCollection()` | Renderiza coleção filtrável |
+| `createBuilderCard(card)` | Cria carta no builder |
+| `renderDeck()` | Renderiza deck |
+| `createDeckCard(card)` | Cria carta no painel do deck |
+| `addCardToDeck(cardId)` | Adiciona carta |
+| `removeCardFromDeck(cardId)` | Remove carta |
+| `clearDeck()` | Limpa deck |
+| `updateStats()` | Atualiza estatísticas |
+| `saveDeckToStorage()` | Salva no LocalStorage |
+| `loadDeckFromStorage()` | Carrega do LocalStorage |
+| `setupBuilderEvents()` | Configura eventos |
+| `startBattle()` | Inicia batalha |
+| `backToBuilder()` | Volta ao builder |
+| `createDefaultDeck()` | Cria deck padrão |
+
+### Inicialização — `main.js`
+| Função | Descrição |
+|--------|-----------|
+| `initializeGame()` | Inicializa sem deck builder |
+| `initializeGameWithDeck(deckIds)` | Inicializa com deck |
+| `setupControls()` | Configura controles |
 
 ---
 
@@ -277,6 +430,8 @@ startBattle()             // Inicia a batalha
 2. **Refatoração Modular**:
    - Migração para padrão IIFE com namespace `KoA`
    - Melhora na organização do código e compatibilidade `file://`
+3. **app.js**:
+   - Criado como bridge ES6 → global (não carregado pelo index.html)
 
 ### ✅ Versão 1.1.0 (14/01/2026)
 1. ~~**Espaçamento de cartas quebrado**~~ → Corrigido CSS de `.cards-container`
@@ -324,8 +479,8 @@ npm run test:watch
 ```
 
 ### Cobertura de Testes
-- `tests/cards.test.js` - Sistema de cartas, validação de deck
-- `tests/engine.test.js` - Motor do jogo, clima, pontuação
+- `tests/cards.test.js` - Sistema de cartas, validação de deck, shuffleArray
+- `tests/engine.test.js` - Motor do jogo, clima, pontuação, cálculo de poder
 
 ---
 
@@ -353,37 +508,42 @@ python -m http.server 8000
 - **Comentários**: JSDoc para funções públicas
 - **Organização**: Arquivos separados por responsabilidade
 - **Constantes**: UPPER_SNAKE_CASE (ex: `CARD_COLLECTION`)
-- **Módulos**: Arquivos `.module.js` para versões ES6
+- **Padrão**: IIFE com namespace `KoA` para encapsulamento
+- **Módulos**: Arquivos `.module.js` para versões ES6 (preparação futura)
 
 ---
 
-## �️ Imagens Faltando
+## 🖼️ Imagens Faltando
 
-As seguintes imagens precisam ser criadas (pasta `assets/`):
+As seguintes imagens são referenciadas em `cards.js` com caminho `assets/` mas **a pasta não existe**:
 
 **Líderes:**
-- `leader_general.png`
-- `leader_usurper.png`
-- `leader_archmage.png`
-- `leader_warlord.png`
+- `assets/leader_general.png`
+- `assets/leader_usurper.png`
+- `assets/leader_archmage.png`
+- `assets/leader_warlord.png`
 
-**Personagens:**
+**Personagens (referenciados como `assets/*`):**
 - `anderson.png`, `vanessa.png`, `pattenberg.png`
 - `marcelo.png`, `clarice.png`, `jacy.png`
 - `kariel.png`, `jassyhara.png`
 - `eliel.png`, `ritatril.png`, `marcus.png`
 
-> 📌 **Nota:** Cartas sem imagem exibem um placeholder visual (padrão xadrez)
+> 📌 **Nota:** Cartas sem imagem exibem um placeholder visual (padrão xadrez).
+> As 16 imagens existentes estão em `img/personagens/`.
 
 ---
 
 ## 📌 Notas para Desenvolvimento Futuro
 
 1. Os arquivos em `js/modules/` estão prontos para migração ES6
-2. A constante `PLAYER_FACTION` está hardcoded como 'alfredolandia'
-3. O inimigo sempre usa cartas da `CARD_COLLECTION`
-4. Considerar PWA com Service Worker para offline
-5. Multiplayer via WebSocket seria interessante
+2. `app.js` já importa e expõe módulos — falta migrar os outros arquivos
+3. A constante `PLAYER_FACTION` está hardcoded como 'alfredolandia'
+4. O inimigo sempre usa cartas da `CARD_COLLECTION`
+5. Considerar PWA com Service Worker para offline
+6. Multiplayer via WebSocket seria interessante
+7. Criar pasta `assets/` e migrar/criar todas as imagens faltantes
+8. Atualizar `package.json` version para `2.1.0`
 
 ---
 
