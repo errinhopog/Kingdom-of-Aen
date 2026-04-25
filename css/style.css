@@ -1236,6 +1236,10 @@ img {
     pointer-events: none;
 }
 
+.builder-card.has-art .card-img-placeholder {
+    display: none;
+}
+
 /* Card Name no Builder */
 .builder-card .card-name {
     position: absolute;

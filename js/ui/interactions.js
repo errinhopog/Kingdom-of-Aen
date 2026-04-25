@@ -164,14 +164,15 @@ function drop(e) {
 
                 try { audioManager.playSFX('card-place'); } catch (e) { console.warn('SFX failed', e); }
 
-                // Handle Special Cards (Spells) - Remove after use
-                if (card.dataset.kind === 'special') {
+                // Handle one-shot special cards (spells) - Remove after use
+                const oneShotAbilities = ['scorch', 'weather_frost', 'weather_fog', 'weather_rain', 'weather_clear'];
+                if (card.dataset.category === 'special' && oneShotAbilities.includes(card.dataset.ability)) {
                     setTimeout(() => {
                         const cardObj = {
                             id: card.dataset.id,
                             name: card.dataset.name,
                             type: card.dataset.type,
-                            kind: card.dataset.kind,
+                            category: card.dataset.category,
                             power: parseInt(card.dataset.basePower),
                             ability: card.dataset.ability,
                             isHero: card.dataset.isHero === "true"

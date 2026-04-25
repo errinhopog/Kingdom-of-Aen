@@ -189,16 +189,6 @@ function validateDeck(deckIds) {
     return { valid: errors.length === 0, errors, units, specials };
 }
 
-/** Embaralha um array (Fisher-Yates shuffle) */
-function shuffleArray(array) {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-}
-
 /** Converte array de IDs em array de objetos de carta (clonados) */
 function idsToCards(deckIds) {
     return deckIds.map(id => {

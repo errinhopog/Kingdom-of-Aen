@@ -58,6 +58,11 @@ function createBuilderCard(card) {
     const div = document.createElement('div');
     div.className = 'builder-card';
     div.dataset.cardId = card.id;
+
+    if (card.img) {
+        div.style.backgroundImage = `url('${card.img}')`;
+        div.classList.add('has-art');
+    }
     
     // Adiciona classe se já está no deck
     if (playerDeckIds.includes(card.id)) {
@@ -144,6 +149,11 @@ function createDeckCard(card) {
     const div = document.createElement('div');
     div.className = 'deck-card';
     div.dataset.cardId = card.id;
+
+    if (card.img) {
+        div.style.backgroundImage = `url('${card.img}')`;
+        div.classList.add('has-art');
+    }
     
     if (card.category === 'special') {
         div.classList.add('special');
@@ -377,7 +387,7 @@ function createDefaultDeck() {
     
     // Adiciona todas as cartas de unidade disponíveis
     CARD_COLLECTION.forEach(card => {
-        if (card.type === 'unit') {
+        if (card.category === 'unit') {
             defaultIds.push(card.id);
         }
     });

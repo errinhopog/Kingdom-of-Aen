@@ -35,6 +35,7 @@ const ABILITY_DESCRIPTIONS = {
     tight_bond: 'Vínculo Forte',
     decoy: 'Espantalho',
     scorch: 'Queimar',
+    hero: 'Herói',
     weather_frost: 'Geada',
     weather_fog: 'Névoa',
     weather_rain: 'Chuva',

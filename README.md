@@ -1,39 +1,82 @@
-# ⚔️ Kingdom of Aen (KoA)
+# Kingdom of Aen
 
-> *Estratégia, Fileiras e Conquista.*
+Kingdom of Aen e um jogo de cartas tatico inspirado em duelos por fileiras, com deck builder, mulligan, efeitos de cartas, lideres e uma IA simples para o oponente.
 
-**Kingdom of Aen** é um jogo de cartas de estratégia (TCG/CCG) com temática de fantasia medieval. O projeto consiste na digitalização e evolução de um jogo de cartas físico originalmente criado e impresso manualmente, agora sendo portado para uma experiência web interativa.
+O projeto e uma aplicacao web estatica feita com HTML, CSS e JavaScript puro. Nao ha etapa de build, bundler ou framework no estado atual.
 
-##  Sobre o Projeto
+## Estado Atual
 
-O jogo foca em duelos táticos onde o posicionamento é tão importante quanto o poder da carta. Inspirado em clássicos como *Gwent*, o objetivo é vencer rodadas através da gestão inteligente de recursos e blefes.
+- Deck builder com persistencia em `localStorage`.
+- Colecao com 43 cartas: 39 unidades e 4 especiais.
+- 4 lideres com habilidades proprias.
+- Partida em melhor de 3 rodadas.
+- Tabuleiro com fileiras `melee`, `ranged` e `siege`.
+- IA baseada em prioridades para passar, usar lideres, jogar combos, medicos, espiões e espantalhos.
+- Audio de fundo e efeitos sonoros locais.
 
-O nome **"Aen"** é uma homenagem às iniciais da instituição onde o conceito original nasceu (A.E.N.), recontextualizada aqui como um antigo reino de fantasia.
+## Como Rodar
 
-##  Objetivos Atuais
+Opcao simples:
 
-Este repositório documenta a transição do físico para o digital:
+```powershell
+Start-Process .\index.html
+```
 
-- [ ] **Digitalização:** Conversão do acervo de cartas físicas para JSON.
-- [ ] **Algoritmo de Raridade:** Sistema que define a raridade da carta (Comum, Rara, Lendária) baseado na frequência de impressão do protótipo físico.
-- [ ] **Core Engine:** Implementação da lógica de duelo e pontuação.
-- [ ] **Interface (UI):** Criação do tabuleiro e visualização das cartas.
+Opcao recomendada para simular melhor um ambiente web:
 
-##  Tecnologias
+```powershell
+python -m http.server 8080
+```
 
-* **Linguagem:** [HTML/CSS/JS ou React/Vue]
-* **Armazenamento de Dados:** JSON (Estrutura de Cartas)
-* **Ferramentas:** VSCode, Gemini Copilot
+Depois abra:
 
-##  Como Jogar (Conceito)
+```text
+http://localhost:8080
+```
 
-1.  **Duelo de Fileiras:** As unidades são posicionadas em fileiras de Combate (Melee) ou Distância (Ranged).
-2.  **Pontuação:** Vence a rodada quem tiver a maior soma de força total no tabuleiro.
-3.  **Estratégia:** Saber quando passar a vez para poupar cartas para a rodada seguinte é crucial.
+## Como Jogar
 
-##  Contribuição
+1. Monte um deck no deck builder.
+2. O deck precisa ter pelo menos 22 unidades e no maximo 10 especiais.
+3. Inicie a batalha e troque ate 2 cartas no mulligan.
+4. Jogue cartas nas fileiras corretas ou passe a rodada.
+5. Vence a rodada quem tiver a maior pontuacao total no tabuleiro.
+6. Vence a partida quem ganhar 2 rodadas.
 
-Este é um projeto pessoal de portfólio em desenvolvimento ativo. Sugestões sobre balanceamento e lógica de jogo são bem-vindas!
+## Estrutura
 
----
-*Desenvolvido por Pedro Braga e Ramon*
+```text
+.
+|-- index.html
+|-- css/
+|   `-- style.css
+|-- js/
+|   |-- core/
+|   |-- data/
+|   |-- ui/
+|   |-- utils/
+|   |-- deckbuilder.js
+|   `-- main.js
+|-- img/
+|-- audio/
+`-- docs/
+```
+
+## Documentacao
+
+- [Arquitetura](docs/ARCHITECTURE.md)
+- [Regras e Sistemas](docs/GAME_RULES.md)
+- [Guia de Desenvolvimento](docs/DEVELOPMENT.md)
+- [Assets](docs/ASSETS.md)
+- [Melhorias Recomendadas](docs/IMPROVEMENTS.md)
+- [Plano de Sprints](docs/SPRINTS.md)
+
+## Observacoes Importantes
+
+Algumas cartas ainda apontam para imagens em `assets/*.png`, mas essa pasta nao existe no repositorio atual. O jogo continua funcionando com o visual de fallback das cartas, porem a arte dessas cartas nao aparece. A lista completa esta em [Assets](docs/ASSETS.md).
+
+Algumas habilidades ja estao implementadas no motor, mas ainda nao existem cartas usando elas na colecao atual. Isso esta documentado em [Regras e Sistemas](docs/GAME_RULES.md) e ajuda a orientar a proxima fase de expansao.
+
+## Autoria
+
+Desenvolvido por Pedro Braga e Ramon.
