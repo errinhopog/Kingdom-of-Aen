@@ -110,10 +110,20 @@ Campos relevantes:
 - `ability`: habilidade lida por `triggerAbility()`.
 - `isHero`: carta imune a clima e scorch.
 
-## Pontos de Atenção
+## Pontos de Atencao
 
-- `shuffleArray()` existe em `js/utils/helpers.js` e tambem em `js/data/cards.js`.
-- `createDefaultDeck()` verifica `card.type === 'unit'`, mas os dados usam `category: 'unit'`.
-- O drop de especiais verifica `card.dataset.kind`, mas `createCardElement()` define `dataset.category`.
-- Varias referencias de arte apontam para `assets/*.png`, pasta que nao existe atualmente.
-- Algumas habilidades estao implementadas, mas nao possuem cartas na colecao atual.
+- `shuffleArray()` existe em `js/utils/helpers.js`. Em `js/data/cards.js` ja foi removida a duplicacao.
+- `createDefaultDeck()` (deckbuilder) ja usa `category === 'unit'`, alinhado com os dados.
+- A logica de remocao de especiais one-shot ja usa `dataset.category === 'special'`.
+- Varias referencias de arte apontam para `assets/*.png`, pasta que nao existe atualmente. Ver [ASSETS.md](ASSETS.md).
+- Algumas habilidades estao implementadas no motor (`weather_*`, `scorch`, `spy`, `tight_bond`), mas nao possuem cartas na colecao atual. Ver [GAME_RULES.md](GAME_RULES.md).
+- Estado e funcoes vivem em escopo global (sem ES Modules). A ordem de scripts em `index.html` e o contrato implicito do projeto.
+
+## Limites Atuais da Arquitetura
+
+A arquitetura atual e ideal para um single-player local pequeno, mas tem fricoes para crescer:
+
+- **Sem camada de rede.** Nao existe nenhum protocolo de mensagens, websocket, REST ou backend. Adicionar multiplayer exige extrair a logica de estado de variaveis globais (ver [MULTIPLAYER.md](MULTIPLAYER.md)).
+- **Estado misturado com DOM.** `updateScore()` le o DOM como fonte de verdade. Para validacao server-side, a verdade do estado precisaria viver fora do DOM.
+- **Sem testes.** Nao ha testes automatizados. Refatorar para multiplayer sem testes e arriscado.
+- **Sem build step.** Falta de bundler dificulta usar libs (websockets, frameworks de UI). Migrar para Vite/ESBuild + ES Modules e um caminho natural antes de online.
