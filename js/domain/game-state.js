@@ -1,5 +1,7 @@
-const GAME_SIDES = Object.freeze({ PLAYER: 'player', OPPONENT: 'opponent' });
-const GAME_ROWS = Object.freeze(['melee', 'ranged', 'siege']);
+import { CARD_ZONES, moveCardInstance } from './card.js';
+
+export const GAME_SIDES = Object.freeze({ PLAYER: 'player', OPPONENT: 'opponent' });
+export const GAME_ROWS = Object.freeze(['melee', 'ranged', 'siege']);
 
 function createBoard() {
     return { melee: [], ranged: [], siege: [] };
@@ -38,7 +40,7 @@ function freezeGameState(state) {
 }
 
 /** Cria o estado puro e vazio de uma sessão. */
-function createGameState() {
+export function createGameState() {
     return freezeGameState({
         phase: 'idle',
         processing: false,
@@ -99,7 +101,7 @@ function playFromHand(side, instanceId, row) {
 }
 
 /** Reducer puro de todos os comandos do núcleo jogável. */
-function gameReducer(state, command) {
+export function gameReducer(state, command) {
     let next = state;
 
     switch (command.type) {
@@ -197,7 +199,7 @@ function gameReducer(state, command) {
 }
 
 /** Calcula uma fileira sem qualquer dependência de DOM. */
-function calculateRowScore(cards) {
+export function calculateRowScore(cards) {
     const names = new Set(cards.map(card => card.name));
     return cards.reduce((total, card) => {
         const bonded = !card.isHero
@@ -209,7 +211,7 @@ function calculateRowScore(cards) {
 }
 
 /** Calcula totais e fileiras exclusivamente a partir de GameState. */
-function calculateGameScore(state) {
+export function calculateGameScore(state) {
     const rows = { player: {}, opponent: {} };
     const totals = { player: 0, opponent: 0 };
 

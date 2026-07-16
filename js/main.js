@@ -1,3 +1,18 @@
+import { audioManager } from './core/audio.js';
+import { checkEndRound, configureEngine, enemyTurnLoop } from './core/engine.js';
+import { dispatchGameCommand, gameState, subscribeGameState } from './core/state.js';
+import { CARD_COLLECTION, idsToCards } from './data/cards.js';
+import { GAME_SIDES } from './domain/game-state.js';
+import {
+    configureDeckBuilder,
+    getPlayerDeckIds,
+    initDeckBuilder
+} from './deckbuilder.js';
+import { setupDragAndDrop } from './ui/interactions.js';
+import { startMulligan } from './ui/mulligan.js';
+import { renderGameState } from './ui/render.js';
+import { shuffleArray } from './utils/helpers.js';
+
 // ============================================
 // ===       INICIALIZAÇÃO DO JOGO         ===
 // ============================================
@@ -14,7 +29,7 @@ function initializeGame() {
  * Inicializa o jogo com um deck do Deck Builder
  * @param {Array} deckIds - Array de IDs das cartas do deck
  */
-function initializeGameWithDeck(deckIds) {
+export function initializeGameWithDeck(deckIds) {
     console.log("=== INICIANDO JOGO COM DECK ===");
     console.log("Deck IDs:", deckIds);
 
@@ -69,7 +84,16 @@ function setupControls() {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // NÃO inicializar automaticamente - esperar pelo Deck Builder
+    subscribeGameState(renderGameState);
+    configureDeckBuilder({ startGame: initializeGameWithDeck });
+    configureEngine({
+        restartGame: () => {
+            const deckIds = getPlayerDeckIds();
+            if (deckIds.length > 0) initializeGameWithDeck(deckIds);
+            else initializeGame();
+        }
+    });
+    initDeckBuilder();
     setupDragAndDrop();
     setupControls();
 

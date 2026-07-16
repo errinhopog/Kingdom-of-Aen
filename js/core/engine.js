@@ -2,6 +2,22 @@
 // ===       ENGINE DO JOGO                ===
 // ============================================
 
+import { GAME_SIDES, calculateGameScore } from '../domain/game-state.js';
+import { audioManager } from './audio.js';
+import { enemyTurn } from './ai.js';
+import {
+    dispatchGameCommand,
+    gameState,
+    resetGameState,
+    scheduleGameTask
+} from './state.js';
+
+let restartGameHandler = null;
+
+export function configureEngine({ restartGame }) {
+    restartGameHandler = restartGame;
+}
+
 // ============================================
 // ===       PONTUAÇÃO                     ===
 // ============================================
@@ -11,7 +27,7 @@
  * @param {'player'|'opponent'} who
  * @param {number} count
  */
-function drawCard(who, count) {
+export function drawCard(who, count) {
     dispatchGameCommand({ type: 'DRAW_CARD', side: who, count });
 }
 
@@ -19,7 +35,7 @@ function drawCard(who, count) {
  * Atualiza a pontuação de todas as fileiras e retorna os totais
  * @returns {Object} { totalPlayer, totalOpponent }
  */
-function updateScore() {
+export function updateScore() {
     return calculateGameScore(gameState);
 }
 
@@ -34,7 +50,7 @@ const ENEMY_EFFECT_SETTLE_MS = 850;
  * Passa o turno para um jogador
  * @param {string} who - 'player' ou 'opponent'
  */
-function passTurn(who) {
+export function passTurn(who) {
     if (who === 'opponent') {
         dispatchGameCommand({ type: 'PASS_SIDE', side: GAME_SIDES.OPPONENT });
         checkEndRound();
@@ -44,10 +60,6 @@ function passTurn(who) {
 /**
  * Atualiza os visuais de turno ativo
  */
-function updateTurnVisuals() {
-    renderGameState(gameState);
-}
-
 /** Finaliza a ação da IA e devolve o controle ao jogador. */
 function finishEnemyAction() {
     dispatchGameCommand({ type: 'SET_PROCESSING', value: false });
@@ -60,6 +72,7 @@ function finishEnemyAction() {
 function scheduleEnemyAction(continuous) {
     scheduleGameTask(() => {
         enemyTurn();
+        if (gameState.players.opponent.passed) checkEndRound();
 
         if (continuous && !gameState.players.opponent.passed) {
             scheduleEnemyAction(true);
@@ -74,7 +87,7 @@ function scheduleEnemyAction(continuous) {
  * Solicita uma ação da IA e bloqueia novas entradas até a conclusão.
  * @param {{continuous?: boolean}} options
  */
-function queueEnemyTurn({ continuous = false } = {}) {
+export function queueEnemyTurn({ continuous = false } = {}) {
     if (gameState.players.opponent.passed || gameState.processing) return;
 
     dispatchGameCommand({ type: 'SET_PROCESSING', value: true });
@@ -82,7 +95,7 @@ function queueEnemyTurn({ continuous = false } = {}) {
 }
 
 /** Loop da IA usado depois que o jogador passa a rodada. */
-function enemyTurnLoop() {
+export function enemyTurnLoop() {
     queueEnemyTurn({ continuous: true });
 }
 
@@ -93,7 +106,7 @@ function enemyTurnLoop() {
 /**
  * Verifica se a rodada terminou (ambos passaram)
  */
-function checkEndRound() {
+export function checkEndRound() {
     if (gameState.players.player.passed && gameState.players.opponent.passed) {
         const scores = updateScore();
         scheduleGameTask(() => {
@@ -215,11 +228,7 @@ function resetGame() {
     console.log("=== REINICIANDO JOGO ===");
     disposeGameSession();
 
-    if (typeof playerDeckIds !== 'undefined' && playerDeckIds.length > 0) {
-        initializeGameWithDeck(playerDeckIds);
-    } else {
-        initializeGame();
-    }
+    restartGameHandler?.();
 
     console.log("=== JOGO REINICIADO ===");
 }
@@ -228,7 +237,7 @@ function resetGame() {
  * Descarta a sessão atual sem alterar o deck salvo no builder.
  * @param {{stopAudio?: boolean}} options
  */
-function disposeGameSession({ stopAudio = false } = {}) {
+export function disposeGameSession({ stopAudio = false } = {}) {
     resetGameState();
 
     document.querySelectorAll('.row .cards-container, .hand-cards, #mulligan-cards')

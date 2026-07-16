@@ -1,3 +1,8 @@
+import { GAME_SIDES } from '../domain/game-state.js';
+import { audioManager } from '../core/audio.js';
+import { queueEnemyTurn } from '../core/engine.js';
+import { dispatchGameCommand, gameState } from '../core/state.js';
+
 // ============================================
 // ===       DRAG AND DROP                 ===
 // ============================================
@@ -6,7 +11,7 @@
  * Inicia o arrastar de uma carta
  * @param {DragEvent} e - Evento de drag
  */
-function dragStart(e) {
+export function dragStart(e) {
     if (gameState.players.player.passed || gameState.processing) {
         e.preventDefault();
         return;
@@ -23,14 +28,14 @@ function dragStart(e) {
  * Finaliza o arrastar de uma carta
  * @param {DragEvent} e - Evento de drag
  */
-function dragEnd(e) {
+export function dragEnd(e) {
     e.target.classList.remove('dragging');
 }
 
 /**
  * Configura os eventos de drag and drop nas fileiras
  */
-function setupDragAndDrop() {
+export function setupDragAndDrop() {
     const playerRows = document.querySelectorAll('.row.player');
 
     playerRows.forEach(row => {

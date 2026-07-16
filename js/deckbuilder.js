@@ -1,3 +1,12 @@
+import { audioManager } from './core/audio.js';
+import { disposeGameSession } from './core/engine.js';
+import {
+    CARD_COLLECTION,
+    countDeckComposition,
+    getCardById,
+    validateDeck
+} from './data/cards.js';
+
 // ============================================
 // DECK BUILDER - Kingdom of Aen
 // ============================================
@@ -5,6 +14,14 @@
 // Estado do Builder
 let playerDeckIds = []; // IDs das cartas no deck do jogador
 let currentFilter = 'all';
+let startGameHandler = null;
+
+export function configureDeckBuilder({ startGame }) {
+    startGameHandler = startGame;
+}
+export function getPlayerDeckIds() {
+    return [...playerDeckIds];
+}
 
 // Chave do LocalStorage
 const DECK_STORAGE_KEY = 'kingdomOfAen_playerDeck';
@@ -13,7 +30,7 @@ const DECK_STORAGE_KEY = 'kingdomOfAen_playerDeck';
 // INICIALIZAÇÃO
 // ============================================
 
-function initDeckBuilder() {
+export function initDeckBuilder() {
     loadDeckFromStorage();
     renderCollection();
     renderDeck();
@@ -332,10 +349,10 @@ function startBattle() {
     document.getElementById('scene-battle').classList.add('active');
     
     // Inicia o jogo com o deck do jogador
-    initializeGameWithDeck(playerDeckIds);
+    startGameHandler?.([...playerDeckIds]);
 }
 
-function backToBuilder() {
+export function backToBuilder() {
     disposeGameSession({ stopAudio: true });
 
     // Esconde a batalha e o modal
@@ -364,11 +381,4 @@ function createDefaultDeck() {
     
     return defaultIds;
 }
-
-// ============================================
-// INICIALIZAÇÃO AUTOMÁTICA
-// ============================================
-
-document.addEventListener('DOMContentLoaded', () => {
-    initDeckBuilder();
-});
+// End of deck builder.

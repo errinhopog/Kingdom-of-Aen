@@ -1,3 +1,7 @@
+import { audioManager } from '../core/audio.js';
+import { dispatchGameCommand, gameState, scheduleGameTask } from '../core/state.js';
+import { ABILITY_DESCRIPTIONS } from '../utils/helpers.js';
+
 // ============================================
 // ===       SISTEMA DE MULLIGAN           ===
 // ============================================
@@ -5,7 +9,7 @@
 /**
  * Inicia a fase de mulligan (troca de cartas)
  */
-function startMulligan() {
+export function startMulligan() {
     console.log("[Mulligan] Iniciando fase de troca...");
 
     // Atualizar contador na UI

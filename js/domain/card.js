@@ -1,4 +1,4 @@
-const CARD_ZONES = Object.freeze({
+export const CARD_ZONES = Object.freeze({
     DECK: 'deck',
     HAND: 'hand',
     MULLIGAN: 'mulligan',
@@ -8,7 +8,7 @@ const CARD_ZONES = Object.freeze({
 let nextCardInstanceSequence = 0;
 
 /** Cria a definição imutável compartilhada por todas as instâncias da carta. */
-function createCardDefinition(input) {
+export function createCardDefinition(input) {
     if (!input?.id || !input?.name || !input?.type || !Number.isFinite(input?.power)) {
         throw new TypeError('CardDefinition requer id, name, type e power válido.');
     }
@@ -20,7 +20,7 @@ function createCardDefinition(input) {
 }
 
 /** Cria uma instância imutável com identidade, ownership e controle explícitos. */
-function createCardInstance(definition, options = {}) {
+export function createCardInstance(definition, options = {}) {
     if (!Object.isFrozen(definition)) {
         throw new TypeError('CardInstance requer uma CardDefinition imutável.');
     }
@@ -45,7 +45,7 @@ function createCardInstance(definition, options = {}) {
 }
 
 /** Move uma instância sem alterar sua identidade, definição ou ownership. */
-function moveCardInstance(instance, transition) {
+export function moveCardInstance(instance, transition) {
     if (!instance?.definition || !transition?.zone) {
         throw new TypeError('A transição requer CardInstance e zone.');
     }

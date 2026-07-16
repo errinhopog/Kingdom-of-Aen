@@ -1,16 +1,10 @@
 # Guia de Desenvolvimento
 
-Este projeto atualmente nao usa framework, bundler ou dependencias de npm. A aplicacao depende da ordem de scripts em `index.html` e de variaveis globais.
+Este projeto nao usa framework, bundler ou dependencias externas. A aplicacao usa ES Modules nativos, com imports e exports explicitos a partir de `js/main.js`.
 
 ## Rodando Localmente
 
-Abrir diretamente:
-
-```powershell
-Start-Process .\index.html
-```
-
-Com servidor local:
+Use um servidor local; `file://` nao carrega os modulos de forma portavel:
 
 ```powershell
 python -m http.server 8080
@@ -115,7 +109,7 @@ JSON.parse(localStorage.getItem('kingdomOfAen_playerDeck') || '[]')
 
 ## Cuidados
 
-- Nao altere a ordem dos scripts sem migrar para ES Modules ou outro sistema de modulos.
+- Exponha novas dependencias com `import`/`export`; nao crie simbolos em `globalThis`.
 - Evite criar novas globais quando uma funcao existente ja cobre o fluxo.
 - Sempre verifique caminhos de imagens e audios.
 - Nao adicione uma habilidade aos dados antes de sua regra estar implementada e testada.

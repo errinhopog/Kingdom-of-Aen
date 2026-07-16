@@ -18,25 +18,26 @@ flowchart TD
     I --> A
 ```
 
-## Ordem dos Scripts
+## Entry Point e Dependencias
 
-`index.html` carrega os arquivos nesta ordem:
+`index.html` carrega somente `js/main.js` com `type="module"`. Cada arquivo declara seus imports e exports; nenhuma dependencia depende da ordem manual de tags.
 
-1. `js/utils/helpers.js`
-2. `js/domain/card.js`
-3. `js/domain/game-state.js`
-4. `js/data/cards.js`
-5. `js/core/state.js`
-6. `js/core/audio.js`
-7. `js/core/ai.js`
-8. `js/core/engine.js`
-9. `js/ui/render.js`
-10. `js/ui/interactions.js`
-11. `js/ui/mulligan.js`
-12. `js/deckbuilder.js`
-13. `js/main.js`
+```mermaid
+flowchart LR
+    D["domain"] --> C["core/application"]
+    D --> U["ui"]
+    C --> U
+    C --> M["main.js"]
+    U --> M
+    I["data/infrastructure"] --> C
+    I --> M
+```
 
-Essa ordem e parte do contrato atual do projeto. Como os arquivos nao usam ES Modules, funcoes e constantes precisam existir globalmente antes de serem chamadas.
+- `domain`: modelos, reducer e regras puras.
+- `core`: store, audio e orquestracao da partida.
+- `ui`: projecoes e interacoes do navegador.
+- `data`: catalogo e validacao de deck.
+- `main.js`: composition root que conecta store, render, builder e engine.
 
 ## Modulos
 
@@ -60,7 +61,7 @@ Essa ordem e parte do contrato atual do projeto. Como os arquivos nao usam ES Mo
 
 ## Estado da Partida
 
-`js/domain/game-state.js` define o estado puro e `js/core/state.js` mantem apenas a referencia da sessao atual. `GameState` contem:
+`js/domain/game-state.js` define o estado puro e `js/core/state.js` encapsula a referencia da sessao atual dentro do modulo. `GameState` contem:
 
 - `phase` e `processing`: fase atual e bloqueio de entrada.
 - `mulliganRedraws`: trocas restantes.

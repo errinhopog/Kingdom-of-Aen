@@ -1,9 +1,13 @@
+import { GAME_ROWS, GAME_SIDES, calculateGameScore } from '../domain/game-state.js';
+import { ABILITY_DESCRIPTIONS, ROW_ICONS } from '../utils/helpers.js';
+import { dragEnd, dragStart } from './interactions.js';
+
 // ============================================
 // ===       RENDERIZAÇÃO DE ELEMENTOS     ===
 // ============================================
 
 /** Reconstrói toda a interface de batalha exclusivamente a partir do GameState. */
-function renderGameState(state) {
+export function renderGameState(state) {
     document.querySelectorAll('.row .cards-container, .hand-cards')
         .forEach(container => { container.innerHTML = ''; });
 
@@ -57,8 +61,14 @@ function renderGameState(state) {
         passButton.textContent = state.players.player.passed ? 'Passado' : 'Passar Rodada';
     }
 
-    updateGems('player', state.players.player.wins);
-    updateGems('opponent', state.players.opponent.wins);
+    renderGems('player', state.players.player.wins);
+    renderGems('opponent', state.players.opponent.wins);
+}
+
+function renderGems(sideId, count) {
+    const containerId = sideId === 'player' ? 'player-gems' : 'opponent-gems';
+    const gems = document.getElementById(containerId)?.querySelectorAll('.gem') || [];
+    gems.forEach((gem, index) => gem.classList.toggle('active', index < count));
 }
 
 /**
@@ -90,7 +100,7 @@ function updateDeckCountUI() {
  * @param {Object} card - Dados da carta
  * @returns {HTMLElement} Elemento da carta
  */
-function createCardElement(card) {
+export function createCardElement(card) {
     const el = document.createElement('div');
     el.classList.add('card');
     el.draggable = true;
@@ -175,7 +185,7 @@ function createCardElement(card) {
 }
 
 /** Mantém a referência canônica da instância associada ao elemento visual. */
-function syncCardElementInstance(element, instance) {
+export function syncCardElementInstance(element, instance) {
     element.cardInstance = instance;
     element.dataset.id = instance.instanceId;
     element.dataset.definitionId = instance.definitionId;

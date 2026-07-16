@@ -1,51 +1,34 @@
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const test = require('node:test');
-const vm = require('node:vm');
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import test from 'node:test';
+import { fileURLToPath } from 'node:url';
+import { getCardPriority, shouldEnemyPass } from '../js/core/ai.js';
+import { CARD_COLLECTION, validateDeck } from '../js/data/cards.js';
+import { calculateRowScore } from '../js/domain/game-state.js';
 
-const root = path.resolve(__dirname, '..');
-const read = relativePath => fs.readFileSync(path.join(root, relativePath), 'utf8');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 test('coleção e validação expõem somente as regras do MVP', () => {
-    const context = { console };
-    context.globalThis = context;
-    vm.createContext(context);
-    vm.runInContext([
-        read('js/utils/helpers.js'),
-        read('js/domain/card.js'),
-        read('js/data/cards.js'),
-        `globalThis.rules = { CARD_COLLECTION, validateDeck };`
-    ].join('\n'), context);
-
-    const abilities = new Set(context.rules.CARD_COLLECTION.map(card => card.ability).filter(Boolean));
+    const abilities = new Set(CARD_COLLECTION.map(card => card.ability).filter(Boolean));
     assert.deepEqual([...abilities].sort(), ['bond_partner', 'hero']);
-    assert.ok(context.rules.CARD_COLLECTION.every(card => card.category === 'unit'));
-
-    const ids = context.rules.CARD_COLLECTION.map(card => card.id);
-    assert.equal(context.rules.validateDeck(ids.slice(0, 21)).valid, false);
-    assert.equal(context.rules.validateDeck(ids.slice(0, 22)).valid, true);
+    assert.ok(CARD_COLLECTION.every(card => card.category === 'unit'));
+    const ids = CARD_COLLECTION.map(card => card.id);
+    assert.equal(validateDeck(ids.slice(0, 21)).valid, false);
+    assert.equal(validateDeck(ids.slice(0, 22)).valid, true);
 });
 
 test('fim de rodada não mantém transições de cemitério sem consumidor', () => {
-    const lifecycleSource = `${read('js/core/state.js')}\n${read('js/core/engine.js')}`;
+    const lifecycleSource = ['js/core/state.js', 'js/core/engine.js']
+        .map(relativePath => fs.readFileSync(path.join(root, relativePath), 'utf8')).join('\n');
     assert.doesNotMatch(lifecycleSource, /playerGraveyard|enemyGraveyard/);
 });
 
 test('bond_partner dobra somente parceiros presentes na mesma fileira', () => {
-    const context = {};
-    context.globalThis = context;
-    vm.createContext(context);
-    vm.runInContext([
-        read('js/domain/card.js'),
-        read('js/domain/game-state.js'),
-        `globalThis.rowScore = calculateRowScore;`
-    ].join('\n'), context);
-
     const daniel = { name: 'Daniel', partner: 'Gabriel', ability: 'bond_partner', power: 2 };
     const gabriel = { name: 'Gabriel', partner: 'Daniel', ability: 'bond_partner', power: 2 };
-    assert.equal(context.rowScore([daniel, gabriel]), 8);
-    assert.equal(context.rowScore([daniel]), 2);
+    assert.equal(calculateRowScore([daniel, gabriel]), 8);
+    assert.equal(calculateRowScore([daniel]), 2);
 });
 
 test('IA prioriza parceiros e preserva cartas quando a rodada já está ganha', () => {
@@ -54,32 +37,14 @@ test('IA prioriza parceiros e preserva cartas quando a rodada já está ganha', 
         players: {
             player: { hand: Array(5).fill({}), board: emptyBoard(), passed: playerPassed },
             opponent: {
-                hand: [
-                    { name: 'Gabriel', power: 2 },
-                    { name: 'Daniel', power: 2, ability: 'bond_partner', partner: 'Gabriel' }
-                ],
+                hand: [{ name: 'Gabriel', power: 2 }, { name: 'Daniel', power: 2, ability: 'bond_partner', partner: 'Gabriel' }],
                 board: { ...emptyBoard(), melee: partnerOnBoard ? [{ name: 'Gabriel' }] : [] },
                 passed: false
             }
         }
     });
-    const context = { console, gameState: makeState() };
-    context.globalThis = context;
-    vm.createContext(context);
-    vm.runInContext([
-        `const GAME_ROWS = ['melee', 'ranged', 'siege'];`,
-        read('js/core/ai.js'),
-        `globalThis.ai = {
-            getCardPriority,
-            shouldEnemyPass
-        };`
-    ].join('\n'), context);
-
     const card = { power: 2, ability: 'bond_partner', partner: 'Gabriel' };
-    assert.equal(context.ai.getCardPriority(card, makeState()), 22);
-    assert.equal(context.ai.getCardPriority(card, makeState({ partnerOnBoard: true })), 102);
-    assert.equal(context.ai.shouldEnemyPass(
-        { totalOpponent: 8, totalPlayer: 7 },
-        makeState({ playerPassed: true })
-    ), true);
+    assert.equal(getCardPriority(card, makeState()), 22);
+    assert.equal(getCardPriority(card, makeState({ partnerOnBoard: true })), 102);
+    assert.equal(shouldEnemyPass({ totalOpponent: 8, totalPlayer: 7 }, makeState({ playerPassed: true })), true);
 });
