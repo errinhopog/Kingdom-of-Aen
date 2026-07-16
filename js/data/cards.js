@@ -1,9 +1,11 @@
+import { CARD_ZONES, createCardDefinition, createCardInstance } from '../domain/card.js';
+
 // ============================================
 // ===       COLEÇÃO COMPLETA DE CARTAS    ===
 // ============================================
 // Cada carta tem um ID único para permitir múltiplas cópias no deck
 
-const CARD_COLLECTION = [
+export const CARD_COLLECTION = Object.freeze([
     // =========================================
     // MELEE - COMBOS (3 Cópias cada)
     // =========================================
@@ -84,29 +86,29 @@ const CARD_COLLECTION = [
     // =========================================
     { id: 'cozinheiros_1', baseId: 'cozinheiros', name: 'Cozinheiros', type: 'melee', row: 'all', power: 3, img: 'img/personagens/Cozinheiros.png', category: 'unit' },
     { id: 'cozinheiros_2', baseId: 'cozinheiros', name: 'Cozinheiros', type: 'melee', row: 'all', power: 3, img: 'img/personagens/Cozinheiros.png', category: 'unit' }
-];
+].map(createCardDefinition));
 
 // ============================================
 // ===       FUNÇÕES AUXILIARES            ===
 // ============================================
 
 /** Retorna uma carta da coleção pelo ID */
-function getCardById(id) {
+export function getCardById(id) {
     return CARD_COLLECTION.find(card => card.id === id);
 }
 
 /** Retorna todas as cartas de uma categoria */
-function getCardsByCategory(category) {
+export function getCardsByCategory(category) {
     return CARD_COLLECTION.filter(card => card.category === category);
 }
 
 /** Retorna todas as cartas de um tipo (melee, ranged, siege) */
-function getCardsByType(type) {
+export function getCardsByType(type) {
     return CARD_COLLECTION.filter(card => card.type === type);
 }
 
 /** Conta unidades e poder total em um array de IDs */
-function countDeckComposition(deckIds) {
+export function countDeckComposition(deckIds) {
     let units = 0;
     let totalPower = 0;
     
@@ -120,9 +122,8 @@ function countDeckComposition(deckIds) {
     
     return { units, total: units, totalPower };
 }
-
 /** Valida se um deck possui pelo menos 22 unidades. */
-function validateDeck(deckIds) {
+export function validateDeck(deckIds) {
     const { units } = countDeckComposition(deckIds);
     
     const errors = [];
@@ -133,13 +134,11 @@ function validateDeck(deckIds) {
     return { valid: errors.length === 0, errors, units };
 }
 
-/** Converte array de IDs em array de objetos de carta (clonados) */
-function idsToCards(deckIds) {
+/** Converte IDs de definições em instâncias canônicas. */
+export function idsToCards(deckIds, ownerId, zone = CARD_ZONES.DECK) {
     return deckIds.map(id => {
-        const card = getCardById(id);
-        return card ? { ...card } : null;
+        const definition = getCardById(id);
+        return definition ? createCardInstance(definition, { ownerId, zone }) : null;
     }).filter(card => card !== null);
 }
-
-// Manter compatibilidade com código antigo
-const allCardsData = CARD_COLLECTION;
+// End of card catalog.

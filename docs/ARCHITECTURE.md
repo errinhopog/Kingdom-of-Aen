@@ -1,6 +1,6 @@
 # Arquitetura
 
-Kingdom of Aen roda como uma pagina estatica. O estado e compartilhado por variaveis globais e os scripts precisam ser carregados na ordem definida em `index.html`.
+Kingdom of Aen roda como uma pagina estatica. Um `GameState` imutavel e a unica fonte de verdade da partida; a interface e reconstruida a partir dele.
 
 ## Visao Geral
 
@@ -18,23 +18,26 @@ flowchart TD
     I --> A
 ```
 
-## Ordem dos Scripts
+## Entry Point e Dependencias
 
-`index.html` carrega os arquivos nesta ordem:
+`index.html` carrega somente `js/main.js` com `type="module"`. Cada arquivo declara seus imports e exports; nenhuma dependencia depende da ordem manual de tags.
 
-1. `js/utils/helpers.js`
-2. `js/data/cards.js`
-3. `js/core/state.js`
-4. `js/core/audio.js`
-5. `js/core/ai.js`
-6. `js/core/engine.js`
-7. `js/ui/render.js`
-8. `js/ui/interactions.js`
-9. `js/ui/mulligan.js`
-10. `js/deckbuilder.js`
-11. `js/main.js`
+```mermaid
+flowchart LR
+    D["domain"] --> C["core/application"]
+    D --> U["ui"]
+    C --> U
+    C --> M["main.js"]
+    U --> M
+    I["data/infrastructure"] --> C
+    I --> M
+```
 
-Essa ordem e parte do contrato atual do projeto. Como os arquivos nao usam ES Modules, funcoes e constantes precisam existir globalmente antes de serem chamadas.
+- `domain`: modelos, reducer e regras puras.
+- `core`: store, audio e orquestracao da partida.
+- `ui`: projecoes e interacoes do navegador.
+- `data`: catalogo e validacao de deck.
+- `main.js`: composition root que conecta store, render, builder e engine.
 
 ## Modulos
 
@@ -43,26 +46,32 @@ Essa ordem e parte do contrato atual do projeto. Como os arquivos nao usam ES Mo
 | `index.html` | Estrutura das duas cenas: deck builder e batalha. |
 | `css/style.css` | Layout, cartas, tabuleiro, modais, animacoes, mulligan e deck builder. |
 | `js/data/cards.js` | Dados de cartas, validacao de deck e helpers de colecao. |
+| `js/domain/card.js` | Definicoes e instancias canonicas, zonas, ownership e controle. |
+| `js/domain/game-state.js` | Estado puro, reducer, comandos e calculo de pontuacao. |
 | `js/utils/helpers.js` | Constantes de icones e descricoes de habilidades. |
-| `js/core/state.js` | Estado global da partida, rodada, timers e mulligan. |
+| `js/core/state.js` | Store da sessao, dispatch e registro de timers cancelaveis. |
 | `js/core/audio.js` | Musica, efeitos sonoros, cache de audio e mute persistido. |
 | `js/core/ai.js` | Decisao do oponente por prioridades. |
-| `js/core/engine.js` | Compra, pontuacao, turnos, fim de rodada, fim de jogo e reset. |
-| `js/ui/render.js` | Criacao visual das cartas e atualizacao de contadores. |
+| `js/core/engine.js` | Orquestracao de turnos, fim de rodada, fim de jogo e reset. |
+| `js/ui/render.js` | Projecao integral de `GameState` para o DOM. |
 | `js/ui/interactions.js` | Drag and drop das cartas do jogador. |
 | `js/ui/mulligan.js` | Fase de troca inicial de cartas. |
 | `js/deckbuilder.js` | Montagem, filtros, estatisticas e persistencia do deck. |
 | `js/main.js` | Inicializacao do jogo, controles principais e botao de audio. |
 
-## Estado Global
+## Estado da Partida
 
-O estado principal vive em `js/core/state.js`:
+`js/domain/game-state.js` define o estado puro e `js/core/state.js` encapsula a referencia da sessao atual dentro do modulo. `GameState` contem:
 
-- `enemyHand`, `playerDeck`, `enemyDeck`: cartas em mao e decks restantes.
-- `playerPassed`, `enemyPassed`, `isProcessingTurn`: controle de turno.
-- `playerWins`, `enemyWins`: placar da partida.
-- `mulliganHand`, `mulliganRedraws`: estado temporario do mulligan.
-- `pendingGameTimers`: tarefas assincronas pertencentes a sessao atual.
+- `phase` e `processing`: fase atual e bloqueio de entrada.
+- `mulliganRedraws`: trocas restantes.
+- `players.player` e `players.opponent`: deck, mao, tabuleiro, passe e vitorias de cada lado.
+
+Toda mudanca passa por `gameReducer()`. Os comandos cobrem inicializacao, mulligan, inicio da batalha, compra, jogada, passe, premiacao e reset de rodada. `calculateGameScore()` recebe somente o estado e roda em Node sem DOM.
+
+`renderGameState()` limpa e recria mao, tabuleiro, placar, contadores, gemas e estados de turno. O DOM nunca e consultado para decidir uma regra.
+
+`pendingGameTimers`, mantido fora do dominio, registra tarefas assincronas pertencentes a sessao atual.
 
 O deck escolhido pelo jogador fica em `playerDeckIds`, definido em `js/deckbuilder.js`, e e salvo em `localStorage` com a chave `kingdomOfAen_playerDeck`.
 
@@ -77,6 +86,17 @@ O deck escolhido pelo jogador fica em `playerDeckIds`, definido em `js/deckbuild
 7. O mulligan inicia antes da batalha ficar jogavel.
 
 ## Contratos de Dados
+
+`CardDefinition` e a fonte imutavel de nome, poder, arte e habilidade. `CardInstance` referencia essa definicao e adiciona estado de runtime:
+
+- `instanceId`: identidade unica e estavel durante toda a sessao.
+- `definitionId` e `definition`: ligacao com a definicao original.
+- `ownerId`: dono permanente da carta.
+- `controllerId`: lado que controla a carta no momento.
+- `zone`: `deck`, `mulligan`, `hand` ou `board`.
+- `currentRow`: fileira ocupada quando a zona e `board`.
+
+Transicoes retornam uma nova instancia imutavel, preservando identidade, definicao e ownership. O elemento visual mantem uma referencia direta em `cardInstance`; seus `data-*` sao apenas metadados de apresentacao durante a migracao do estado.
 
 Cada carta da colecao deve seguir este formato base:
 

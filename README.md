@@ -2,7 +2,7 @@
 
 Kingdom of Aen e um jogo de cartas tatico inspirado em duelos por fileiras, com deck builder, mulligan, vinculos entre cartas e uma IA simples para o oponente.
 
-O projeto e uma aplicacao web estatica feita com HTML, CSS e JavaScript puro. Nao ha etapa de build, bundler ou framework no estado atual.
+O projeto e uma aplicacao web estatica feita com HTML, CSS e JavaScript puro em ES Modules. Nao ha etapa de build, bundler ou framework.
 
 ## Estado Atual
 
@@ -15,13 +15,7 @@ O projeto e uma aplicacao web estatica feita com HTML, CSS e JavaScript puro. Na
 
 ## Como Rodar
 
-Opcao simples:
-
-```powershell
-Start-Process .\index.html
-```
-
-Opcao recomendada para simular melhor um ambiente web:
+Sirva o diretorio por HTTP para que o navegador carregue os modulos:
 
 ```powershell
 python -m http.server 8080
@@ -32,6 +26,8 @@ Depois abra:
 ```text
 http://localhost:8080
 ```
+
+Abrir `index.html` diretamente por `file://` nao e suportado por causa das regras de carregamento de ES Modules do navegador.
 
 ## Como Jogar
 

@@ -1,43 +1,49 @@
+import { GAME_ROWS, GAME_SIDES, calculateGameScore } from '../domain/game-state.js';
+import { audioManager } from './audio.js';
+import { dispatchGameCommand, gameState } from './state.js';
+
 /** Retorna a quantidade de cartas na mão do jogador. */
-function getPlayerHandCount() {
-    return document.querySelectorAll('.hand-cards .card').length;
+export function getPlayerHandCount(state = gameState) {
+    return state.players.player.hand.length;
 }
 
 /** Verifica se um parceiro já está no tabuleiro do oponente. */
-function isPartnerOnBoard(partnerName) {
-    return Boolean(document.querySelector(`.row.opponent .card[data-name="${partnerName}"]`));
+export function isPartnerOnBoard(partnerName, state = gameState) {
+    return GAME_ROWS.some(row => state.players.opponent.board[row]
+        .some(card => card.name === partnerName));
 }
 
 /** Verifica se um parceiro ainda está na mão da IA. */
-function isPartnerInHand(partnerName) {
-    return enemyHand.some(card => card.name === partnerName);
+export function isPartnerInHand(partnerName, state = gameState) {
+    return state.players.opponent.hand.some(card => card.name === partnerName);
 }
 
 /** Calcula uma prioridade simples e determinística para uma unidade. */
-function getCardPriority(card) {
+export function getCardPriority(card, state = gameState) {
     if (card.ability === 'bond_partner' && card.partner) {
-        if (isPartnerOnBoard(card.partner)) return 100 + card.power;
-        if (isPartnerInHand(card.partner)) return 20 + card.power;
+        if (isPartnerOnBoard(card.partner, state)) return 100 + card.power;
+        if (isPartnerInHand(card.partner, state)) return 20 + card.power;
     }
     return card.power + (card.isHero ? 5 : 0);
 }
 
 /** Decide se a IA deve economizar cartas e encerrar a rodada. */
-function shouldEnemyPass(scores) {
-    if (enemyHand.length === 0) return true;
-    if (playerPassed && scores.totalOpponent > scores.totalPlayer) return true;
+export function shouldEnemyPass(scores, state = gameState) {
+    const opponent = state.players.opponent;
+    if (opponent.hand.length === 0) return true;
+    if (state.players.player.passed && scores.totalOpponent > scores.totalPlayer) return true;
 
     const lead = scores.totalOpponent - scores.totalPlayer;
-    return lead >= 12 && enemyHand.length < getPlayerHandCount();
+    return lead >= 12 && opponent.hand.length < getPlayerHandCount(state);
 }
 
 /** Escolhe o índice da melhor carta disponível. */
-function chooseEnemyCardIndex() {
+export function chooseEnemyCardIndex(state = gameState) {
     let bestIndex = -1;
     let bestPriority = -Infinity;
 
-    enemyHand.forEach((card, index) => {
-        const priority = getCardPriority(card);
+    state.players.opponent.hand.forEach((card, index) => {
+        const priority = getCardPriority(card, state);
         if (priority > bestPriority) {
             bestPriority = priority;
             bestIndex = index;
@@ -47,35 +53,29 @@ function chooseEnemyCardIndex() {
     return bestIndex;
 }
 
-/** Executa exatamente uma ação da IA. */
-function enemyTurn() {
-    if (enemyPassed) return;
+/** Executa exatamente uma ação da IA por comando de domínio. */
+export function enemyTurn() {
+    if (gameState.players.opponent.passed) return;
 
-    const scores = updateScore();
-    if (shouldEnemyPass(scores)) {
-        passTurn('opponent');
+    const scores = calculateGameScore(gameState);
+    if (shouldEnemyPass(scores, gameState)) {
+        dispatchGameCommand({ type: 'PASS_SIDE', side: GAME_SIDES.OPPONENT });
         return;
     }
 
-    const cardIndex = chooseEnemyCardIndex();
-    if (cardIndex < 0) {
-        passTurn('opponent');
+    const cardIndex = chooseEnemyCardIndex(gameState);
+    const card = gameState.players.opponent.hand[cardIndex];
+    if (!card) {
+        dispatchGameCommand({ type: 'PASS_SIDE', side: GAME_SIDES.OPPONENT });
         return;
     }
 
-    const [card] = enemyHand.splice(cardIndex, 1);
-    const target = document.querySelector(`.row.opponent[data-type="${card.type}"] .cards-container`);
-    if (!target) {
-        enemyHand.push(card);
-        passTurn('opponent');
-        return;
-    }
-
-    const cardElement = createCardElement(card);
-    cardElement.draggable = false;
-    target.appendChild(cardElement);
-    updateEnemyHandUI();
-    updateScore();
+    dispatchGameCommand({
+        type: 'PLAY_CARD',
+        side: GAME_SIDES.OPPONENT,
+        instanceId: card.instanceId,
+        row: card.type
+    });
 
     try { audioManager.playSFX('card-place'); } catch (error) { console.warn('SFX failed', error); }
 }
