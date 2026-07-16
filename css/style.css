@@ -1574,3 +1574,26 @@ img {
 .mulligan-card:nth-child(9) { animation-delay: 0.45s; }
 .mulligan-card:nth-child(10) { animation-delay: 0.5s; }
 
+/* Accessibility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+:where(button, [role="button"], [tabindex]):focus-visible {
+    outline: 3px solid #ffe082;
+    outline-offset: 3px;
+}
+
+.card.selected,
+.card[aria-pressed="true"] {
+    outline: 3px solid #ffe082;
+    transform: translateY(-12px);
+}

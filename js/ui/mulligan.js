@@ -1,6 +1,7 @@
 import { audioManager } from '../core/audio.js';
 import { dispatchGameCommand, gameState, scheduleGameTask } from '../core/state.js';
 import { ABILITY_DESCRIPTIONS } from '../utils/helpers.js';
+import { announce, closeAccessibleDialog, openAccessibleDialog } from './accessibility.js';
 
 // ============================================
 // ===       SISTEMA DE MULLIGAN           ===
@@ -10,8 +11,6 @@ import { ABILITY_DESCRIPTIONS } from '../utils/helpers.js';
  * Inicia a fase de mulligan (troca de cartas)
  */
 export function startMulligan() {
-    console.log("[Mulligan] Iniciando fase de troca...");
-
     // Atualizar contador na UI
     const redrawCountEl = document.getElementById('redraw-count');
     if (redrawCountEl) {
@@ -25,7 +24,7 @@ export function startMulligan() {
     // Mostrar overlay
     const overlay = document.getElementById('mulligan-overlay');
     if (overlay) {
-        overlay.classList.remove('hidden');
+        openAccessibleDialog(overlay, document.getElementById('mulligan-confirm-btn'));
     }
 
     // Setup botão de confirmar
@@ -35,7 +34,7 @@ export function startMulligan() {
     }
 
     // Tocar SFX de shuffle
-    try { audioManager.playSFX('shuffle'); } catch (e) { console.warn('SFX failed', e); }
+    try { audioManager.playSFX('shuffle'); } catch { /* Audio opcional. */ }
 }
 
 /**
@@ -60,10 +59,12 @@ function renderMulliganCards() {
  * @returns {HTMLElement} Elemento da carta
  */
 function createMulliganCardElement(card, index) {
-    const el = document.createElement('div');
+    const el = document.createElement('button');
+    el.type = 'button';
     el.classList.add('mulligan-card');
     el.dataset.index = index;
     el.dataset.id = card.id;
+    el.setAttribute('aria-label', `Trocar ${card.name}, ${card.power} pontos`);
 
     // Background image
     if (card.img) {
@@ -121,19 +122,17 @@ function createMulliganCardElement(card, index) {
 function redrawCard(index) {
     // Verificar se ainda pode trocar
     if (gameState.mulliganRedraws <= 0) {
-        console.log("[Mulligan] Sem trocas restantes!");
+        announce('Não há mais trocas disponíveis.', 'error-status');
         return;
     }
 
     // Verificar se o deck tem cartas
     if (gameState.players.player.deck.length === 0) {
-        console.log("[Mulligan] Deck vazio!");
+        announce('O deck não possui cartas para troca.', 'error-status');
         return;
     }
 
     const oldCard = gameState.players.player.hand[index];
-    console.log(`[Mulligan] Trocando carta: ${oldCard.name}`);
-
     dispatchGameCommand({ type: 'MULLIGAN_REDRAW', handIndex: index }, { render: false });
     const newCardWithId = gameState.players.player.hand[index];
 
@@ -174,31 +173,27 @@ function redrawCard(index) {
     }
 
     // 9. Tocar SFX
-    try { audioManager.playSFX('card-slide'); } catch (e) { console.warn('SFX failed', e); }
-
-    console.log(`[Mulligan] Nova carta: ${newCardWithId.name}. Trocas restantes: ${gameState.mulliganRedraws}`);
+    try { audioManager.playSFX('card-slide'); } catch { /* Audio opcional. */ }
+    announce(`${oldCard.name} trocada por ${newCardWithId.name}. ${gameState.mulliganRedraws} trocas restantes.`);
 }
 
 /**
  * Finaliza a fase de mulligan e inicia o jogo
  */
 function finishMulligan() {
-    console.log("[Mulligan] Finalizando fase de troca...");
-
     // 1. Esconder overlay
     const overlay = document.getElementById('mulligan-overlay');
     if (overlay) {
-        overlay.classList.add('hidden');
+        closeAccessibleDialog(overlay);
     }
 
     // 2. Entrar na batalha e reconstruir a UI a partir do estado.
     dispatchGameCommand({ type: 'START_BATTLE' });
 
     // 4. Iniciar música de batalha
-    try { audioManager.playMusic(); } catch (e) { console.warn('Music failed', e); }
+    try { audioManager.playMusic(); } catch { /* Audio opcional. */ }
 
     // 5. Tocar SFX de início
-    try { audioManager.playSFX('switch'); } catch (e) { console.warn('SFX failed', e); }
-
-    console.log("=== JOGO INICIADO ===");
+    try { audioManager.playSFX('switch'); } catch { /* Audio opcional. */ }
+    announce('Batalha iniciada. Seu turno.');
 }

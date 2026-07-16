@@ -1,5 +1,6 @@
 import { audioManager } from './core/audio.js';
 import { disposeGameSession } from './core/engine.js';
+import { announce } from './ui/accessibility.js';
 import {
     CARD_COLLECTION,
     countDeckComposition,
@@ -15,6 +16,7 @@ import {
 let playerDeckIds = []; // IDs das cartas no deck do jogador
 let currentFilter = 'all';
 let startGameHandler = null;
+let clearConfirmationPending = false;
 
 export function configureDeckBuilder({ startGame }) {
     startGameHandler = startGame;
@@ -66,9 +68,11 @@ function renderCollection() {
 }
 
 function createBuilderCard(card) {
-    const div = document.createElement('div');
+    const div = document.createElement('button');
+    div.type = 'button';
     div.className = 'builder-card';
     div.dataset.cardId = card.id;
+    div.setAttribute('aria-label', `Adicionar ${card.name}, ${card.power} pontos ao deck`);
 
     if (card.img) {
         div.style.backgroundImage = `url('${card.img}')`;
@@ -143,9 +147,11 @@ function renderDeck() {
 }
 
 function createDeckCard(card) {
-    const div = document.createElement('div');
+    const div = document.createElement('button');
+    div.type = 'button';
     div.className = 'deck-card';
     div.dataset.cardId = card.id;
+    div.setAttribute('aria-label', `Remover ${card.name} do deck`);
 
     if (card.img) {
         div.style.backgroundImage = `url('${card.img}')`;
@@ -217,14 +223,27 @@ function removeCardFromDeck(cardId) {
 
 function clearDeck() {
     if (playerDeckIds.length === 0) return;
-    
-    if (confirm('Tem certeza que deseja limpar o deck?')) {
-        playerDeckIds = [];
-        renderCollection(); // Atualiza status de "in-deck"
-        renderDeck();
-        updateStats();
-        saveDeckToStorage();
+
+    const clearButton = document.getElementById('clear-deck-btn');
+    if (!clearConfirmationPending) {
+        clearConfirmationPending = true;
+        clearButton.textContent = 'Confirmar limpeza';
+        announce('Pressione novamente para confirmar a limpeza do deck.', 'error-status');
+        setTimeout(() => {
+            clearConfirmationPending = false;
+            clearButton.textContent = '🗑️ Limpar';
+        }, 5000);
+        return;
     }
+
+    clearConfirmationPending = false;
+    clearButton.textContent = '🗑️ Limpar';
+    playerDeckIds = [];
+    renderCollection();
+    renderDeck();
+    updateStats();
+    saveDeckToStorage();
+    announce('Deck limpo.');
 }
 
 // ============================================
@@ -274,9 +293,7 @@ function updateStats() {
 function saveDeckToStorage() {
     try {
         localStorage.setItem(DECK_STORAGE_KEY, JSON.stringify(playerDeckIds));
-    } catch (e) {
-        console.warn('Não foi possível salvar o deck:', e);
-    }
+    } catch { /* Storage indisponível: a sessão continua em memória. */ }
 }
 
 function loadDeckFromStorage() {
@@ -287,8 +304,7 @@ function loadDeckFromStorage() {
             // Valida se os IDs ainda existem na coleção
             playerDeckIds = ids.filter(id => getCardById(id) !== null);
         }
-    } catch (e) {
-        console.warn('Não foi possível carregar o deck:', e);
+    } catch {
         playerDeckIds = [];
     }
 }
@@ -335,14 +351,14 @@ function setupBuilderEvents() {
 function startBattle() {
     const validation = validateDeck(playerDeckIds);
     if (!validation.valid) {
-        alert('Deck inválido! ' + validation.errors.join(' '));
+        announce(`Deck inválido. ${validation.errors.join(' ')}`, 'error-status');
         return;
     }
 
     disposeGameSession();
 
     // Play shuffle SFX when starting the battle
-    try { audioManager.playSFX('shuffle'); } catch (e) { console.warn('SFX failed', e); }
+    try { audioManager.playSFX('shuffle'); } catch { /* Audio opcional. */ }
 
     // Esconde o builder, mostra a batalha
     document.getElementById('scene-builder').classList.remove('active');

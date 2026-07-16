@@ -83,7 +83,7 @@
          ============================================ -->
     <div id="scene-battle" class="scene">
         <!-- Modal de Fim de Jogo -->
-        <div id="game-over-modal" class="modal-overlay hidden">
+        <div id="game-over-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title" tabindex="-1">
             <div class="modal-content">
                 <div class="modal-icon" id="modal-icon">👑</div>
                 <h1 class="modal-title" id="modal-title">VITÓRIA!</h1>
@@ -106,10 +106,10 @@
         </div>
 
         <!-- Overlay de Mulligan (Fase de Troca de Cartas) -->
-        <div id="mulligan-overlay" class="mulligan-overlay hidden">
+        <div id="mulligan-overlay" class="mulligan-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mulligan-title" tabindex="-1">
             <div class="mulligan-content">
                 <div class="mulligan-header">
-                    <h2 class="mulligan-title">⚔️ Prepare suas Forças</h2>
+                    <h2 class="mulligan-title" id="mulligan-title">⚔️ Prepare suas Forças</h2>
                     <p class="mulligan-subtitle">Clique em até <span id="redraw-count" class="redraw-count">2</span>
                         cartas para trocá-las</p>
                 </div>
@@ -156,19 +156,19 @@
                 <!-- Lado do Jogador -->
                 <div class="player-side">
                     <!-- Zona Corpo a Corpo Jogador -->
-                    <div class="row melee player" data-type="melee">
+                    <div class="row melee player" data-type="melee" role="button" tabindex="0" aria-label="Jogar na fileira corpo a corpo">
                         <div class="row-label">Melee (Player)</div>
                         <div class="cards-container"></div>
                         <div class="row-score">0</div>
                     </div>
                     <!-- Zona de Ataque à Distância Jogador -->
-                    <div class="row ranged player" data-type="ranged">
+                    <div class="row ranged player" data-type="ranged" role="button" tabindex="0" aria-label="Jogar na fileira de longo alcance">
                         <div class="row-label">Ranged (Player)</div>
                         <div class="cards-container"></div>
                         <div class="row-score">0</div>
                     </div>
                     <!-- Zona de Cerco Jogador -->
-                    <div class="row siege player" data-type="siege">
+                    <div class="row siege player" data-type="siege" role="button" tabindex="0" aria-label="Jogar na fileira de cerco">
                         <div class="row-label">Siege (Player)</div>
                         <div class="cards-container"></div>
                         <div class="row-score">0</div>
@@ -212,6 +212,9 @@
             </div>
         </div>
     </div>
+
+    <div id="game-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    <div id="error-status" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
 
     <script type="module" src="js/main.js"></script>
 </body>

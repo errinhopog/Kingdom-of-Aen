@@ -77,5 +77,5 @@ export function enemyTurn() {
         row: card.type
     });
 
-    try { audioManager.playSFX('card-place'); } catch (error) { console.warn('SFX failed', error); }
+    try { audioManager.playSFX('card-place'); } catch { /* Audio opcional. */ }
 }

@@ -22,3 +22,12 @@ test('código não mantém alias global ou fallbacks de ordem', () => {
     assert.doesNotMatch(sources, /\ballCardsData\b/);
     assert.doesNotMatch(sources, /typeof\s+[A-Za-z_$]/);
 });
+
+test('fluxo principal não usa console ou diálogos nativos', () => {
+    const sources = fs.readdirSync(path.join(root, 'js'), { recursive: true })
+        .filter(relativePath => relativePath.endsWith('.js'))
+        .map(relativePath => read(path.join('js', relativePath)))
+        .join('\n');
+    assert.doesNotMatch(sources, /console\./);
+    assert.doesNotMatch(sources, /\b(?:alert|confirm)\s*\(/);
+});
