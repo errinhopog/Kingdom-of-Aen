@@ -73,7 +73,7 @@ http://localhost:8080
 
 ## Observacoes Importantes
 
-Algumas cartas ainda apontam para imagens em `assets/*.png`, mas essa pasta nao existe no repositorio atual. O jogo continua funcionando com o visual de fallback das cartas, porem a arte dessas cartas nao aparece. A lista completa esta em [Assets](docs/ASSETS.md).
+Cartas sem arte cadastrada usam o visual de fallback do proprio componente. Nenhum caminho de imagem inexistente deve ser mantido nos dados; as convencoes e a lista de artes disponiveis estao em [Assets](docs/ASSETS.md).
 
 Algumas habilidades ja estao implementadas no motor, mas ainda nao existem cartas usando elas na colecao atual. Isso esta documentado em [Regras e Sistemas](docs/GAME_RULES.md) e ajuda a orientar a proxima fase de expansao.
 
