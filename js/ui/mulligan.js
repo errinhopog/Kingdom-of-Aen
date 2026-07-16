@@ -180,7 +180,7 @@ function redrawCard(index) {
         if (cardEl) {
             cardEl.classList.add('swapping');
 
-            setTimeout(() => {
+            scheduleGameTask(() => {
                 const newCardEl = createMulliganCardElement(newCardWithId, index);
                 newCardEl.classList.add('swapped');
                 cardEl.replaceWith(newCardEl);
@@ -190,7 +190,7 @@ function redrawCard(index) {
 
     // 8. Desabilitar todas as cartas se não houver mais trocas
     if (mulliganRedraws <= 0) {
-        setTimeout(() => {
+        scheduleGameTask(() => {
             const allCards = container.querySelectorAll('.mulligan-card');
             allCards.forEach(card => {
                 if (!card.classList.contains('swapped')) {

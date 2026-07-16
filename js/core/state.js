@@ -58,6 +58,30 @@ let enemyPassed = false;
  */
 let isProcessingTurn = false;
 
+/** Timers vinculados à sessão de jogo atual. */
+const pendingGameTimers = new Set();
+
+/**
+ * Agenda uma tarefa que será cancelada ao descartar a sessão.
+ * @param {Function} callback
+ * @param {number} delay
+ * @returns {number}
+ */
+function scheduleGameTask(callback, delay) {
+    const timerId = setTimeout(() => {
+        pendingGameTimers.delete(timerId);
+        callback();
+    }, delay);
+    pendingGameTimers.add(timerId);
+    return timerId;
+}
+
+/** Cancela todas as tarefas pendentes da sessão atual. */
+function cancelPendingGameTasks() {
+    pendingGameTimers.forEach(timerId => clearTimeout(timerId));
+    pendingGameTimers.clear();
+}
+
 // ============================================
 // ===       ESTADO DAS VITÓRIAS           ===
 // ============================================
@@ -153,6 +177,7 @@ const PLAYER_FACTION = 'alfredolandia';
  * @returns {void}
  */
 function resetGameState() {
+    cancelPendingGameTasks();
     activeWeather = { frost: false, fog: false, rain: false };
     enemyHand = [];
     playerDeck = [];

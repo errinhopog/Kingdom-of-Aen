@@ -149,7 +149,7 @@ function enemyTurnLoop() {
     isProcessingTurn = true;
     updateTurnVisuals();
 
-    setTimeout(() => {
+    scheduleGameTask(() => {
         enemyTurn();
         if (!enemyPassed) {
             console.debug('[DEBUG enemyTurnLoop] scheduling next iteration (enemy still active)');
@@ -172,7 +172,7 @@ function enemyTurnLoop() {
 function checkEndRound() {
     if (playerPassed && enemyPassed) {
         const scores = updateScore();
-        setTimeout(() => {
+        scheduleGameTask(() => {
             let winner = "";
             if (scores.totalPlayer > scores.totalOpponent) {
                 winner = "player";
@@ -235,13 +235,13 @@ function showRoundMessage(message) {
     toast.innerHTML = `<span>${message.replace(/\n/g, '<br>')}</span>`;
     document.body.appendChild(toast);
 
-    setTimeout(() => {
+    scheduleGameTask(() => {
         toast.classList.add('show');
     }, 100);
 
-    setTimeout(() => {
+    scheduleGameTask(() => {
         toast.classList.remove('show');
-        setTimeout(() => {
+        scheduleGameTask(() => {
             toast.remove();
             prepareNextRound();
         }, 300);
@@ -304,56 +304,8 @@ function showGameOverModal() {
  */
 function resetGame() {
     console.log("=== REINICIANDO JOGO ===");
+    disposeGameSession();
 
-    // 1. Resetar variáveis de estado
-    playerWins = 0;
-    enemyWins = 0;
-    playerPassed = false;
-    enemyPassed = false;
-    isProcessingTurn = false;
-    activeWeather = { frost: false, fog: false, rain: false };
-    playerGraveyard = [];
-    enemyGraveyard = [];
-    enemyHand = [];
-    playerDeck = [];
-    enemyDeck = [];
-
-    // 2. Resetar estado dos líderes
-    playerLeaderUsed = false;
-    enemyLeaderUsed = false;
-
-    // 3. Limpar tabuleiro
-    const allRows = document.querySelectorAll('.row .cards-container');
-    allRows.forEach(container => {
-        container.innerHTML = '';
-    });
-
-    // 4. Limpar mão do jogador
-    const handContainer = document.querySelector('.hand-cards');
-    if (handContainer) {
-        handContainer.innerHTML = '';
-    }
-
-    // 5. Resetar gemas visuais
-    document.querySelectorAll('.gem').forEach(gem => {
-        gem.classList.remove('active');
-    });
-
-    // 6. Resetar visuais de "passed"
-    document.querySelector('.player-side')?.classList.remove('passed');
-    document.querySelector('.opponent-side')?.classList.remove('passed');
-
-    // 7. Resetar botão de passar
-    const passBtn = document.getElementById('pass-button');
-    if (passBtn) {
-        passBtn.disabled = false;
-        passBtn.textContent = "Passar Rodada";
-    }
-
-    // 8. Resetar clima visual
-    updateWeatherVisuals();
-
-    // 9. Reinicializar o jogo com o deck salvo
     if (typeof playerDeckIds !== 'undefined' && playerDeckIds.length > 0) {
         initializeGameWithDeck(playerDeckIds);
     } else {
@@ -361,6 +313,52 @@ function resetGame() {
     }
 
     console.log("=== JOGO REINICIADO ===");
+}
+
+/**
+ * Descarta a sessão atual sem alterar o deck salvo no builder.
+ * @param {{stopAudio?: boolean}} options
+ */
+function disposeGameSession({ stopAudio = false } = {}) {
+    resetGameState();
+
+    document.querySelectorAll('.row .cards-container, .hand-cards, #mulligan-cards')
+        .forEach(container => { container.innerHTML = ''; });
+
+    document.querySelectorAll('.gem').forEach(gem => gem.classList.remove('active'));
+    document.querySelectorAll('.row, .player-side, .opponent-side')
+        .forEach(element => element.classList.remove(
+            'passed',
+            'active-turn',
+            'drag-over',
+            'weather-active-frost',
+            'weather-active-fog',
+            'weather-active-rain'
+        ));
+
+    document.querySelectorAll('.round-toast').forEach(toast => toast.remove());
+    document.getElementById('mulligan-overlay')?.classList.add('hidden');
+    document.getElementById('game-over-modal')?.classList.add('hidden');
+
+    const passBtn = document.getElementById('pass-button');
+    if (passBtn) {
+        passBtn.disabled = false;
+        passBtn.textContent = 'Passar Rodada';
+    }
+
+    const counters = {
+        'score-total-player': '0',
+        'score-total-opponent': '0',
+        'enemy-hand-count': '0',
+        'player-deck-count': '0'
+    };
+    Object.entries(counters).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    });
+
+    updateLeaderVisuals();
+    if (stopAudio) audioManager.stopMusic();
 }
 
 /**
