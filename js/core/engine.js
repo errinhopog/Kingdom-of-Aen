@@ -16,13 +16,13 @@ function drawCard(who, count) {
         if (who === 'player') {
             if (playerDeck.length === 0) continue;
             const drawnCard = playerDeck.shift();
-            const newCard = { ...drawnCard, id: `p_draw_${Date.now()}_${i}_${drawnCard.id}` };
+            const newCard = moveCardInstance(drawnCard, { zone: CARD_ZONES.HAND });
             document.querySelector('.hand-cards')?.appendChild(createCardElement(newCard));
             updateDeckCountUI();
         } else {
             if (enemyDeck.length === 0) continue;
             const drawnCard = enemyDeck.shift();
-            enemyHand.push({ ...drawnCard, id: `e_draw_${Date.now()}_${i}_${drawnCard.id}` });
+            enemyHand.push(moveCardInstance(drawnCard, { zone: CARD_ZONES.HAND }));
             updateEnemyHandUI();
         }
     }

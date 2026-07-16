@@ -23,16 +23,17 @@ flowchart TD
 `index.html` carrega os arquivos nesta ordem:
 
 1. `js/utils/helpers.js`
-2. `js/data/cards.js`
-3. `js/core/state.js`
-4. `js/core/audio.js`
-5. `js/core/ai.js`
-6. `js/core/engine.js`
-7. `js/ui/render.js`
-8. `js/ui/interactions.js`
-9. `js/ui/mulligan.js`
-10. `js/deckbuilder.js`
-11. `js/main.js`
+2. `js/domain/card.js`
+3. `js/data/cards.js`
+4. `js/core/state.js`
+5. `js/core/audio.js`
+6. `js/core/ai.js`
+7. `js/core/engine.js`
+8. `js/ui/render.js`
+9. `js/ui/interactions.js`
+10. `js/ui/mulligan.js`
+11. `js/deckbuilder.js`
+12. `js/main.js`
 
 Essa ordem e parte do contrato atual do projeto. Como os arquivos nao usam ES Modules, funcoes e constantes precisam existir globalmente antes de serem chamadas.
 
@@ -43,6 +44,7 @@ Essa ordem e parte do contrato atual do projeto. Como os arquivos nao usam ES Mo
 | `index.html` | Estrutura das duas cenas: deck builder e batalha. |
 | `css/style.css` | Layout, cartas, tabuleiro, modais, animacoes, mulligan e deck builder. |
 | `js/data/cards.js` | Dados de cartas, validacao de deck e helpers de colecao. |
+| `js/domain/card.js` | Definicoes e instancias canonicas, zonas, ownership e controle. |
 | `js/utils/helpers.js` | Constantes de icones e descricoes de habilidades. |
 | `js/core/state.js` | Estado global da partida, rodada, timers e mulligan. |
 | `js/core/audio.js` | Musica, efeitos sonoros, cache de audio e mute persistido. |
@@ -77,6 +79,17 @@ O deck escolhido pelo jogador fica em `playerDeckIds`, definido em `js/deckbuild
 7. O mulligan inicia antes da batalha ficar jogavel.
 
 ## Contratos de Dados
+
+`CardDefinition` e a fonte imutavel de nome, poder, arte e habilidade. `CardInstance` referencia essa definicao e adiciona estado de runtime:
+
+- `instanceId`: identidade unica e estavel durante toda a sessao.
+- `definitionId` e `definition`: ligacao com a definicao original.
+- `ownerId`: dono permanente da carta.
+- `controllerId`: lado que controla a carta no momento.
+- `zone`: `deck`, `mulligan`, `hand` ou `board`.
+- `currentRow`: fileira ocupada quando a zona e `board`.
+
+Transicoes retornam uma nova instancia imutavel, preservando identidade, definicao e ownership. O elemento visual mantem uma referencia direta em `cardInstance`; seus `data-*` sao apenas metadados de apresentacao durante a migracao do estado.
 
 Cada carta da colecao deve seguir este formato base:
 

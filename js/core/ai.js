@@ -63,10 +63,14 @@ function enemyTurn() {
         return;
     }
 
-    const [card] = enemyHand.splice(cardIndex, 1);
+    const [handCard] = enemyHand.splice(cardIndex, 1);
+    const card = moveCardInstance(handCard, {
+        zone: CARD_ZONES.BOARD,
+        currentRow: handCard.type
+    });
     const target = document.querySelector(`.row.opponent[data-type="${card.type}"] .cards-container`);
     if (!target) {
-        enemyHand.push(card);
+        enemyHand.push(handCard);
         passTurn('opponent');
         return;
     }

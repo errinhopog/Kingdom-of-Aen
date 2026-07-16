@@ -11,7 +11,8 @@ function renderHand() {
 
     handContainer.innerHTML = '';
 
-    allCardsData.forEach(card => {
+    allCardsData.forEach(definition => {
+        const card = createCardInstance(definition, { ownerId: 'player', zone: CARD_ZONES.HAND });
         const cardElement = createCardElement(card);
         handContainer.appendChild(cardElement);
     });
@@ -27,12 +28,9 @@ function renderHandFromCards(cards) {
 
     handContainer.innerHTML = '';
 
-    cards.forEach((card, index) => {
-        const cardWithUniqueId = {
-            ...card,
-            id: `p${index}_${card.id}`
-        };
-        const cardElement = createCardElement(cardWithUniqueId);
+    cards.forEach(card => {
+        const handCard = moveCardInstance(card, { zone: CARD_ZONES.HAND });
+        const cardElement = createCardElement(handCard);
         handContainer.appendChild(cardElement);
     });
 }
@@ -71,8 +69,9 @@ function createCardElement(card) {
     el.classList.add('card');
     el.draggable = true;
 
-    // Data attributes
-    el.dataset.id = card.id;
+    syncCardElementInstance(el, card);
+
+    // Data attributes usados somente pela apresentação durante a migração do estado.
     el.dataset.type = card.type;
     el.dataset.category = card.category || "unit";
     el.dataset.power = card.power;
@@ -147,4 +146,15 @@ function createCardElement(card) {
     el.addEventListener('dragend', dragEnd);
 
     return el;
+}
+
+/** Mantém a referência canônica da instância associada ao elemento visual. */
+function syncCardElementInstance(element, instance) {
+    element.cardInstance = instance;
+    element.dataset.id = instance.instanceId;
+    element.dataset.definitionId = instance.definitionId;
+    element.dataset.ownerId = instance.ownerId;
+    element.dataset.controllerId = instance.controllerId;
+    element.dataset.zone = instance.zone;
+    element.dataset.currentRow = instance.currentRow || '';
 }

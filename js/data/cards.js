@@ -3,7 +3,7 @@
 // ============================================
 // Cada carta tem um ID único para permitir múltiplas cópias no deck
 
-const CARD_COLLECTION = [
+const CARD_COLLECTION = Object.freeze([
     // =========================================
     // MELEE - COMBOS (3 Cópias cada)
     // =========================================
@@ -84,7 +84,7 @@ const CARD_COLLECTION = [
     // =========================================
     { id: 'cozinheiros_1', baseId: 'cozinheiros', name: 'Cozinheiros', type: 'melee', row: 'all', power: 3, img: 'img/personagens/Cozinheiros.png', category: 'unit' },
     { id: 'cozinheiros_2', baseId: 'cozinheiros', name: 'Cozinheiros', type: 'melee', row: 'all', power: 3, img: 'img/personagens/Cozinheiros.png', category: 'unit' }
-];
+].map(createCardDefinition));
 
 // ============================================
 // ===       FUNÇÕES AUXILIARES            ===
@@ -133,11 +133,11 @@ function validateDeck(deckIds) {
     return { valid: errors.length === 0, errors, units };
 }
 
-/** Converte array de IDs em array de objetos de carta (clonados) */
-function idsToCards(deckIds) {
+/** Converte IDs de definições em instâncias canônicas. */
+function idsToCards(deckIds, ownerId, zone = CARD_ZONES.DECK) {
     return deckIds.map(id => {
-        const card = getCardById(id);
-        return card ? { ...card } : null;
+        const definition = getCardById(id);
+        return definition ? createCardInstance(definition, { ownerId, zone }) : null;
     }).filter(card => card !== null);
 }
 

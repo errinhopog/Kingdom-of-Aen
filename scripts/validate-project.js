@@ -18,6 +18,7 @@ function exists(relativePath) {
 function loadGameData() {
     const source = [
         read('js/utils/helpers.js'),
+        read('js/domain/card.js'),
         read('js/data/cards.js'),
         `
         globalThis.__koaData = {

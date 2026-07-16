@@ -23,6 +23,7 @@ Depois acesse `http://localhost:8080`.
 | Tarefa | Arquivos principais |
 | --- | --- |
 | Adicionar cartas | `js/data/cards.js` |
+| Ajustar modelo de carta | `js/domain/card.js` |
 | Ajustar regra de deck | `js/data/cards.js`, `js/deckbuilder.js` |
 | Ajustar habilidade do MVP | `js/core/engine.js`, `js/utils/helpers.js`, `js/core/ai.js` |
 | Ajustar IA | `js/core/ai.js` |

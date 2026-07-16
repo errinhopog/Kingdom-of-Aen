@@ -84,6 +84,10 @@ function drop(e) {
     if (cardType !== rowType && !isAgile) return;
 
     row.querySelector('.cards-container').appendChild(card);
+    syncCardElementInstance(card, moveCardInstance(card.cardInstance, {
+        zone: CARD_ZONES.BOARD,
+        currentRow: rowType
+    }));
     card.draggable = false;
     card.classList.remove('dragging');
     updateScore();

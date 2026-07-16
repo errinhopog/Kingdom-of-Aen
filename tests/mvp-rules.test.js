@@ -22,6 +22,7 @@ test('coleção e validação expõem somente as regras do MVP', () => {
     vm.createContext(context);
     vm.runInContext([
         read('js/utils/helpers.js'),
+        read('js/domain/card.js'),
         read('js/data/cards.js'),
         `globalThis.rules = { CARD_COLLECTION, validateDeck };`
     ].join('\n'), context);

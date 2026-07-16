@@ -10,8 +10,11 @@ function initializeGame() {
     // Initialize Enemy Hand with random cards from DB
     enemyHand = [];
     for (let i = 0; i < 10; i++) {
-        const randomCard = allCardsData[Math.floor(Math.random() * allCardsData.length)];
-        enemyHand.push({ ...randomCard, id: `e${i}_${randomCard.id}` });
+        const definition = allCardsData[Math.floor(Math.random() * allCardsData.length)];
+        enemyHand.push(createCardInstance(definition, {
+            ownerId: 'opponent',
+            zone: CARD_ZONES.HAND
+        }));
     }
 
     updateScore();
@@ -30,9 +33,12 @@ function initializeGameWithDeck(deckIds) {
     // 1. Converter IDs para objetos de carta e embaralhar
     let convertedPlayerCards = [];
     if (typeof idsToCards === 'function') {
-        convertedPlayerCards = idsToCards(deckIds);
+        convertedPlayerCards = idsToCards(deckIds, 'player');
     } else {
-        convertedPlayerCards = deckIds.map(id => allCardsData.find(c => c.id === id)).filter(Boolean);
+        convertedPlayerCards = deckIds
+            .map(id => allCardsData.find(card => card.id === id))
+            .filter(Boolean)
+            .map(definition => createCardInstance(definition, { ownerId: 'player' }));
         console.warn('[DEBUG initializeGameWithDeck] idsToCards() not found — using fallback mapping.');
     }
     playerDeck = shuffleArray(convertedPlayerCards || []);
@@ -49,9 +55,12 @@ function initializeGameWithDeck(deckIds) {
 
     let convertedEnemyCards = [];
     if (typeof idsToCards === 'function') {
-        convertedEnemyCards = idsToCards(enemyDeckIds);
+        convertedEnemyCards = idsToCards(enemyDeckIds, 'opponent');
     } else {
-        convertedEnemyCards = enemyDeckIds.map(id => (sourceCollection || allCardsData).find(c => c.id === id)).filter(Boolean);
+        convertedEnemyCards = enemyDeckIds
+            .map(id => (sourceCollection || allCardsData).find(card => card.id === id))
+            .filter(Boolean)
+            .map(definition => createCardInstance(definition, { ownerId: 'opponent' }));
     }
     enemyDeck = shuffleArray(convertedEnemyCards || []);
     console.log("Deck inimigo (built):", enemyDeck.length, "cartas");
@@ -60,10 +69,8 @@ function initializeGameWithDeck(deckIds) {
     const playerStartingHand = playerDeck.splice(0, 10);
 
     // 4. Comprar 10 cartas para a mão do inimigo
-    enemyHand = enemyDeck.splice(0, 10).map((card, i) => ({
-        ...card,
-        id: `e${i}_${card.id}`
-    }));
+    enemyHand = enemyDeck.splice(0, 10)
+        .map(card => moveCardInstance(card, { zone: CARD_ZONES.HAND }));
     console.log('[DEBUG initializeGameWithDeck] enemyHand length after draw:', enemyHand.length);
 
     // 5. INICIAR FASE DE MULLIGAN

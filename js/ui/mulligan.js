@@ -10,10 +10,8 @@ function startMulligan(playerHand) {
     console.log("[Mulligan] Iniciando fase de troca...");
 
     // Resetar estado
-    mulliganHand = playerHand.map((card, i) => ({
-        ...card,
-        id: `p${i}_${card.id}`
-    }));
+    mulliganHand = playerHand
+        .map(card => moveCardInstance(card, { zone: CARD_ZONES.MULLIGAN }));
     mulliganRedraws = 2;
 
     // Atualizar contador na UI
@@ -139,24 +137,14 @@ function redrawCard(index) {
     console.log(`[Mulligan] Trocando carta: ${oldCard.name}`);
 
     // 1. Devolver carta antiga ao deck
-    const cardToReturn = { ...oldCard };
-    delete cardToReturn.id;
-    const originalCard = CARD_COLLECTION.find(c => oldCard.id.includes(c.id));
-    if (originalCard) {
-        playerDeck.push({ ...originalCard });
-    } else {
-        playerDeck.push(cardToReturn);
-    }
+    playerDeck.push(moveCardInstance(oldCard, { zone: CARD_ZONES.DECK }));
 
     // 2. Embaralhar o deck
     playerDeck = shuffleArray(playerDeck);
 
     // 3. Comprar nova carta do topo
     const newCard = playerDeck.shift();
-    const newCardWithId = {
-        ...newCard,
-        id: `p${index}_${newCard.id}`
-    };
+    const newCardWithId = moveCardInstance(newCard, { zone: CARD_ZONES.MULLIGAN });
 
     // 4. Substituir na mão
     mulliganHand[index] = newCardWithId;
