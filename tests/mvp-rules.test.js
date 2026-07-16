@@ -35,6 +35,11 @@ test('coleção e validação expõem somente as regras do MVP', () => {
     assert.equal(context.rules.validateDeck(ids.slice(0, 22)).valid, true);
 });
 
+test('fim de rodada não mantém transições de cemitério sem consumidor', () => {
+    const lifecycleSource = `${read('js/core/state.js')}\n${read('js/core/engine.js')}`;
+    assert.doesNotMatch(lifecycleSource, /playerGraveyard|enemyGraveyard/);
+});
+
 test('bond_partner dobra somente parceiros presentes na mesma fileira', () => {
     const scoreElements = {
         'score-total-player': { textContent: '' },

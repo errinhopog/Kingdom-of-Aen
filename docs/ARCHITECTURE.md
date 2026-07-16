@@ -44,7 +44,7 @@ Essa ordem e parte do contrato atual do projeto. Como os arquivos nao usam ES Mo
 | `css/style.css` | Layout, cartas, tabuleiro, modais, animacoes, mulligan e deck builder. |
 | `js/data/cards.js` | Dados de cartas, validacao de deck e helpers de colecao. |
 | `js/utils/helpers.js` | Constantes de icones e descricoes de habilidades. |
-| `js/core/state.js` | Estado global da partida, rodada, cemiterios, timers e mulligan. |
+| `js/core/state.js` | Estado global da partida, rodada, timers e mulligan. |
 | `js/core/audio.js` | Musica, efeitos sonoros, cache de audio e mute persistido. |
 | `js/core/ai.js` | Decisao do oponente por prioridades. |
 | `js/core/engine.js` | Compra, pontuacao, turnos, fim de rodada, fim de jogo e reset. |
@@ -61,7 +61,6 @@ O estado principal vive em `js/core/state.js`:
 - `enemyHand`, `playerDeck`, `enemyDeck`: cartas em mao e decks restantes.
 - `playerPassed`, `enemyPassed`, `isProcessingTurn`: controle de turno.
 - `playerWins`, `enemyWins`: placar da partida.
-- `playerGraveyard`, `enemyGraveyard`: cartas descartadas ou destruidas.
 - `mulliganHand`, `mulliganRedraws`: estado temporario do mulligan.
 - `pendingGameTimers`: tarefas assincronas pertencentes a sessao atual.
 

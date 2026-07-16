@@ -391,31 +391,9 @@ function updateGems(who, count) {
  * Prepara a próxima rodada
  */
 function prepareNextRound() {
-    // 1. Clear Board (Visual & Logic)
+    // 1. Remove as unidades da rodada encerrada.
     const allRows = document.querySelectorAll('.row .cards-container');
-    allRows.forEach(container => {
-        const cards = container.querySelectorAll('.card');
-        cards.forEach(card => {
-            const cardObj = {
-                id: card.dataset.id,
-                name: card.dataset.name,
-                type: card.dataset.type,
-                power: parseInt(card.dataset.basePower),
-                ability: card.dataset.ability,
-                isHero: card.dataset.isHero === "true"
-            };
-
-            if (container.closest('.opponent-side')) {
-                enemyGraveyard.push(cardObj);
-            } else {
-                playerGraveyard.push(cardObj);
-            }
-        });
-        container.innerHTML = '';
-    });
-
-    console.log("Cemitério Jogador:", playerGraveyard);
-    console.log("Cemitério Inimigo:", enemyGraveyard);
+    allRows.forEach(container => { container.innerHTML = ''; });
 
     // 2. Reset States
     playerPassed = false;

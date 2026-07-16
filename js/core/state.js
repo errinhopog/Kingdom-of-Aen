@@ -89,22 +89,6 @@ let playerWins = 0;
 let enemyWins = 0;
 
 // ============================================
-// ===       CEMITÉRIOS                    ===
-// ============================================
-
-/**
- * Cartas no cemitério do jogador
- * @type {Array<Object>}
- */
-let playerGraveyard = [];
-
-/**
- * Cartas no cemitério do inimigo
- * @type {Array<Object>}
- */
-let enemyGraveyard = [];
-
-// ============================================
 // ===       MULLIGAN                      ===
 // ============================================
 
@@ -138,14 +122,12 @@ function resetGameState() {
     isProcessingTurn = false;
     playerWins = 0;
     enemyWins = 0;
-    playerGraveyard = [];
-    enemyGraveyard = [];
     mulliganHand = [];
     mulliganRedraws = 2;
 }
 
 /**
- * Reseta apenas o estado da rodada (mantém vitórias e cemitérios)
+ * Reseta apenas o estado da rodada (mantém vitórias)
  * @returns {void}
  */
 function resetRoundState() {
