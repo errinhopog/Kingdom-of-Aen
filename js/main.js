@@ -30,9 +30,6 @@ function initializeGame() {
  * @param {Array} deckIds - Array de IDs das cartas do deck
  */
 export function initializeGameWithDeck(deckIds) {
-    console.log("=== INICIANDO JOGO COM DECK ===");
-    console.log("Deck IDs:", deckIds);
-
     const playerCards = shuffleArray(idsToCards(deckIds, GAME_SIDES.PLAYER));
     const enemyDeckIds = CARD_COLLECTION.map(card => card.id);
     const opponentCards = shuffleArray(idsToCards(enemyDeckIds, GAME_SIDES.OPPONENT));
@@ -43,11 +40,7 @@ export function initializeGameWithDeck(deckIds) {
         opponentDeck: opponentCards
     });
 
-    console.log("Deck embaralhado (player):", playerCards.length, "cartas");
-    console.log("Deck inimigo (built):", opponentCards.length, "cartas");
     startMulligan();
-
-    console.log("=== AGUARDANDO MULLIGAN ===");
 }
 
 // ============================================
@@ -64,10 +57,9 @@ function setupControls() {
             if (gameState.players.player.passed || gameState.processing) return;
 
             dispatchGameCommand({ type: 'PASS_SIDE', side: GAME_SIDES.PLAYER });
-            console.log("Jogador passou a vez.");
 
             // Play button SFX
-            try { audioManager.playSFX('switch'); } catch (e) { console.warn('SFX failed', e); }
+            try { audioManager.playSFX('switch'); } catch { /* Audio opcional. */ }
 
             // If player passes, enemy plays until they win or pass
             if (!gameState.players.opponent.passed) {
@@ -99,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start music on first user interaction (browser gesture requirement)
     document.addEventListener('click', () => {
-        try { audioManager.playMusic(); } catch (e) { console.warn('Audio start failed', e); }
+        try { audioManager.playMusic(); } catch { /* Audio opcional. */ }
     }, { once: true });
 
     // Create mute/unmute toggle button
@@ -125,5 +117,5 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.style.borderRadius = '6px';
         btn.style.cursor = 'pointer';
         document.body.appendChild(btn);
-    } catch (e) { console.warn('Failed to create audio toggle', e); }
+    } catch { /* Audio opcional. */ }
 });

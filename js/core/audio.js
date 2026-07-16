@@ -105,9 +105,7 @@ export class AudioManager {
         this.bgMusic = new AudioConstructor(this.basePath + track);
         this.bgMusic.loop = true;
         this.bgMusic.volume = this.musicMuted ? 0 : 0.3;
-        this.bgMusic.play().catch(e => {
-            console.warn('Autoplay blocked. Music will play after user interaction.', e);
-        });
+        this.bgMusic.play().catch(() => { /* Aguarda a próxima interação do usuário. */ });
     }
 
     /**

@@ -5,7 +5,7 @@
 import { GAME_SIDES, calculateGameScore } from '../domain/game-state.js';
 import { audioManager } from './audio.js';
 import { enemyTurn } from './ai.js';
-import { closeAccessibleDialog, openAccessibleDialog } from '../ui/accessibility.js';
+import { announce, closeAccessibleDialog, openAccessibleDialog } from '../ui/accessibility.js';
 import {
     dispatchGameCommand,
     gameState,
@@ -201,13 +201,13 @@ function showGameOverModal() {
         title.className = "modal-title victory";
         subtitle.textContent = "Você dominou o campo de batalha!";
         icon.textContent = "👑";
-        try { audioManager.playSFX('switch'); } catch (e) { console.warn('SFX failed', e); }
+        try { audioManager.playSFX('switch'); } catch { /* Audio opcional. */ }
     } else {
         title.textContent = "DERROTA";
         title.className = "modal-title defeat";
         subtitle.textContent = "O inimigo prevaleceu desta vez...";
         icon.textContent = "💀";
-        try { audioManager.playSFX('switch'); } catch (e) { console.warn('SFX failed', e); }
+        try { audioManager.playSFX('switch'); } catch { /* Audio opcional. */ }
     }
 
     // Setup botão de jogar novamente
@@ -224,12 +224,10 @@ function showGameOverModal() {
  * Reseta o jogo completamente
  */
 function resetGame() {
-    console.log("=== REINICIANDO JOGO ===");
     disposeGameSession();
 
     restartGameHandler?.();
 
-    console.log("=== JOGO REINICIADO ===");
 }
 
 /**
@@ -301,5 +299,5 @@ function prepareNextRound() {
     drawCard('player', 1);
     drawCard('opponent', 1);
 
-    alert("Nova Rodada Iniciada! +1 Carta para cada.");
+    announce('Nova rodada iniciada. Uma carta comprada por cada lado.');
 }

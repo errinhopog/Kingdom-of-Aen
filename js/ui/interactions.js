@@ -80,6 +80,6 @@ function playCard(cardId, row) {
         announce(error.message, 'error-status');
         return;
     }
-    try { audioManager.playSFX('card-place'); } catch (error) { console.warn('SFX failed', error); }
+    try { audioManager.playSFX('card-place'); } catch { /* Audio opcional. */ }
     if (!gameState.players.opponent.passed) queueEnemyTurn();
 }
