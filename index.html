@@ -32,7 +32,6 @@
                             <button class="filter-btn" data-filter="melee">⚔️ Melee</button>
                             <button class="filter-btn" data-filter="ranged">🏹 Ranged</button>
                             <button class="filter-btn" data-filter="siege">🏰 Siege</button>
-                            <button class="filter-btn" data-filter="special">✨ Especiais</button>
                         </div>
                     </div>
                     <div class="collection-grid" id="collection-grid">
@@ -63,11 +62,6 @@
                         <span class="stat-label">Unidades</span>
                         <span class="stat-value" id="stat-units">0</span>
                         <span class="stat-requirement">(mín. 22)</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Especiais</span>
-                        <span class="stat-value" id="stat-specials">0</span>
-                        <span class="stat-requirement">(máx. 10)</span>
                     </div>
                     <div class="stat-item stat-power">
                         <span class="stat-label">Poder Total</span>
@@ -129,35 +123,6 @@
         </div>
 
         <div class="game-container">
-            <!-- Coluna de Líderes (Esquerda) -->
-            <div class="leaders-column">
-                <!-- Líder do Oponente -->
-                <div class="leader-slot opponent-leader" id="enemy-leader">
-                    <div class="leader-card" id="enemy-leader-card">
-                        <div class="leader-img"></div>
-                        <div class="leader-name">Líder Inimigo</div>
-                        <div class="leader-ability-text">Habilidade</div>
-                    </div>
-                    <div class="leader-used-overlay">USADO</div>
-                </div>
-
-                <!-- Indicador de Deck -->
-                <div class="deck-indicator">
-                    <div class="deck-icon">🃏</div>
-                    <span id="player-deck-count">0</span>
-                </div>
-
-                <!-- Líder do Jogador -->
-                <div class="leader-slot player-leader" id="player-leader">
-                    <div class="leader-card" id="player-leader-card">
-                        <div class="leader-img"></div>
-                        <div class="leader-name">Líder</div>
-                        <div class="leader-ability-text">Habilidade</div>
-                    </div>
-                    <div class="leader-used-overlay">USADO</div>
-                </div>
-            </div>
-
             <!-- Área Principal do Tabuleiro (Centro) -->
             <div class="main-board">
                 <!-- Lado do Oponente (Topo) -->
@@ -220,6 +185,10 @@
 
                     <!-- Placar -->
                     <div class="scoreboard">
+                        <div class="deck-indicator" aria-label="Cartas restantes no deck">
+                            <span class="deck-icon">🃏</span>
+                            <span id="player-deck-count">0</span>
+                        </div>
                         <div class="score-title">Placar</div>
                         <div class="score-details">
                             <div class="score-row opponent-score-row">
@@ -251,8 +220,6 @@
     <!-- Core -->
     <script src="js/core/state.js"></script>
     <script src="js/core/audio.js"></script>
-    <script src="js/core/abilities.js"></script>
-    <script src="js/core/leaders.js"></script>
     <script src="js/core/ai.js"></script>
     <script src="js/core/engine.js"></script>
 

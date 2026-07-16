@@ -22,7 +22,6 @@ function loadGameData() {
         `
         globalThis.__koaData = {
             CARD_COLLECTION,
-            leaderCardsData,
             ABILITY_DESCRIPTIONS,
             ROW_ICONS
         };
@@ -56,7 +55,6 @@ const errors = [];
 const warnings = [];
 const data = loadGameData();
 const cards = data.CARD_COLLECTION || [];
-const leaders = data.leaderCardsData || [];
 const abilityDescriptions = data.ABILITY_DESCRIPTIONS || {};
 const rowIcons = data.ROW_ICONS || {};
 
@@ -86,7 +84,7 @@ if (missingAbilityDescriptions.length) {
     warnings.push(`Habilidades sem descricao: ${missingAbilityDescriptions.join(', ')}`);
 }
 
-const missingImages = [...cards, ...leaders]
+const missingImages = cards
     .filter(item => item.img && !exists(item.img))
     .map(item => `${item.id}: ${item.img}`);
 if (missingImages.length) {
@@ -107,13 +105,8 @@ if (cards.length === 0) {
     errors.push('CARD_COLLECTION esta vazia.');
 }
 
-if (leaders.length === 0) {
-    errors.push('leaderCardsData esta vazio.');
-}
-
 console.log('Kingdom of Aen project validation');
 console.log(`Cards: ${cards.length}`);
-console.log(`Leaders: ${leaders.length}`);
 console.log(`Base IDs: ${baseIds.size}`);
 
 if (errors.length) report('ERROS', 'corrigir antes de release', errors);

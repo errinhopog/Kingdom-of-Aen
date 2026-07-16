@@ -226,7 +226,6 @@ function finishMulligan() {
     updateEnemyHandUI();
     updateDeckCountUI();
     updateTurnVisuals();
-    updateLeaderVisuals();
 
     // 4. Iniciar música de batalha
     try { audioManager.playMusic(); } catch (e) { console.warn('Music failed', e); }

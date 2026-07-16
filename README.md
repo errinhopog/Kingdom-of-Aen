@@ -1,17 +1,16 @@
 # Kingdom of Aen
 
-Kingdom of Aen e um jogo de cartas tatico inspirado em duelos por fileiras, com deck builder, mulligan, efeitos de cartas, lideres e uma IA simples para o oponente.
+Kingdom of Aen e um jogo de cartas tatico inspirado em duelos por fileiras, com deck builder, mulligan, vinculos entre cartas e uma IA simples para o oponente.
 
 O projeto e uma aplicacao web estatica feita com HTML, CSS e JavaScript puro. Nao ha etapa de build, bundler ou framework no estado atual.
 
 ## Estado Atual
 
 - Deck builder com persistencia em `localStorage`.
-- Colecao com 43 cartas: 39 unidades e 4 especiais.
-- 4 lideres com habilidades proprias.
+- Colecao com 39 unidades.
 - Partida em melhor de 3 rodadas.
 - Tabuleiro com fileiras `melee`, `ranged` e `siege`.
-- IA baseada em prioridades para passar, usar lideres, jogar combos, medicos, espiões e espantalhos.
+- IA baseada em prioridades para passar, administrar cartas e completar vinculos de parceiros.
 - Audio de fundo e efeitos sonoros locais.
 
 ## Como Rodar
@@ -37,7 +36,7 @@ http://localhost:8080
 ## Como Jogar
 
 1. Monte um deck no deck builder.
-2. O deck precisa ter pelo menos 22 unidades e no maximo 10 especiais.
+2. O deck precisa ter pelo menos 22 unidades.
 3. Inicie a batalha e troque ate 2 cartas no mulligan.
 4. Jogue cartas nas fileiras corretas ou passe a rodada.
 5. Vence a rodada quem tiver a maior pontuacao total no tabuleiro.
@@ -75,7 +74,7 @@ http://localhost:8080
 
 Cartas sem arte cadastrada usam o visual de fallback do proprio componente. Nenhum caminho de imagem inexistente deve ser mantido nos dados; as convencoes e a lista de artes disponiveis estao em [Assets](docs/ASSETS.md).
 
-Algumas habilidades ja estao implementadas no motor, mas ainda nao existem cartas usando elas na colecao atual. Isso esta documentado em [Regras e Sistemas](docs/GAME_RULES.md) e ajuda a orientar a proxima fase de expansao.
+O MVP mantem apenas as habilidades `bond_partner` e `hero`. Novas mecanicas devem entrar acompanhadas de cartas alcancaveis, regras documentadas e testes.
 
 ## Autoria
 

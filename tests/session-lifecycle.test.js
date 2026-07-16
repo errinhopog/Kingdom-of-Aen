@@ -29,8 +29,8 @@ function loadLifecycleHarness() {
     const containers = [createElement(), createElement(), createElement()];
     const gems = [createElement({ classes: ['active'] }), createElement({ classes: ['active'] })];
     const visualElements = [
-        createElement({ classes: ['passed', 'active-turn', 'weather-active-frost'] }),
-        createElement({ classes: ['drag-over', 'weather-active-rain'] })
+        createElement({ classes: ['passed', 'active-turn'] }),
+        createElement({ classes: ['drag-over'] })
     ];
     const toast = createElement();
     const elementsById = {
@@ -77,7 +77,6 @@ function loadLifecycleHarness() {
             timerCallbacks.set(timerId, callback);
             return timerId;
         },
-        updateLeaderVisuals() {}
     };
     context.globalThis = context;
     vm.createContext(context);

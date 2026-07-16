@@ -7,6 +7,28 @@
 // ============================================
 
 /**
+ * Compra cartas do deck.
+ * @param {'player'|'opponent'} who
+ * @param {number} count
+ */
+function drawCard(who, count) {
+    for (let i = 0; i < count; i++) {
+        if (who === 'player') {
+            if (playerDeck.length === 0) continue;
+            const drawnCard = playerDeck.shift();
+            const newCard = { ...drawnCard, id: `p_draw_${Date.now()}_${i}_${drawnCard.id}` };
+            document.querySelector('.hand-cards')?.appendChild(createCardElement(newCard));
+            updateDeckCountUI();
+        } else {
+            if (enemyDeck.length === 0) continue;
+            const drawnCard = enemyDeck.shift();
+            enemyHand.push({ ...drawnCard, id: `e_draw_${Date.now()}_${i}_${drawnCard.id}` });
+            updateEnemyHandUI();
+        }
+    }
+}
+
+/**
  * Atualiza a pontuação de todas as fileiras e retorna os totais
  * @returns {Object} { totalPlayer, totalOpponent }
  */
@@ -17,16 +39,9 @@ function updateScore() {
     const allRows = document.querySelectorAll('.row');
 
     allRows.forEach(row => {
-        const rowType = row.dataset.type;
         const cards = Array.from(row.querySelectorAll('.card'));
 
-        // 1. Check Weather
-        let isWeathered = false;
-        if (rowType === 'melee' && activeWeather.frost) isWeathered = true;
-        if (rowType === 'ranged' && activeWeather.fog) isWeathered = true;
-        if (rowType === 'siege' && activeWeather.rain) isWeathered = true;
-
-        // 2. Check Tight Bonds - Count occurrences of each name
+        // Conta os nomes para resolver vínculos entre parceiros.
         const nameCounts = {};
         cards.forEach(card => {
             const name = card.dataset.name;
@@ -37,21 +52,10 @@ function updateScore() {
 
         cards.forEach(card => {
             let power = parseInt(card.dataset.basePower);
-            const name = card.dataset.name;
             const ability = card.dataset.ability;
             const isHero = card.dataset.isHero === "true";
 
-            // Apply Weather (Heroes are immune)
-            if (isWeathered && !isHero) {
-                power = 1;
-            }
-
-            // Apply Tight Bond
-            if (!isHero && ability === 'tight_bond' && nameCounts[name] > 1) {
-                power *= 2;
-            }
-
-            // Apply Bond Partner
+            // Aplica vínculo entre parceiros.
             const partner = card.dataset.partner;
             if (!isHero && ability === 'bond_partner' && partner) {
                 if (nameCounts[partner] && nameCounts[partner] > 0) {
@@ -137,8 +141,6 @@ function updateTurnVisuals() {
         playerSide.classList.add('active-turn');
     }
 
-    // Atualizar visuais dos líderes também
-    updateLeaderVisuals();
 }
 
 /** Finaliza a ação da IA e devolve o controle ao jogador. */
@@ -215,13 +217,6 @@ function endRound(winner) {
         playerWins++;
         message = "Você venceu a rodada!";
         updateGems("player", playerWins);
-
-        // PASSIVA DE FACÇÃO: ALFREDOLÂNDIA
-        if (PLAYER_FACTION === 'alfredolandia') {
-            console.log("[Passiva] Alfredolândia: Comprando 1 carta extra por vencer a rodada!");
-            drawCard('player', 1);
-            message += "\n🃏 Passiva de Facção: +1 carta!";
-        }
 
     } else if (winner === "opponent") {
         enemyWins++;
@@ -350,9 +345,7 @@ function disposeGameSession({ stopAudio = false } = {}) {
             'passed',
             'active-turn',
             'drag-over',
-            'weather-active-frost',
-            'weather-active-fog',
-            'weather-active-rain'
+            'valid-target'
         ));
 
     document.querySelectorAll('.round-toast').forEach(toast => toast.remove());
@@ -376,7 +369,6 @@ function disposeGameSession({ stopAudio = false } = {}) {
         if (element) element.textContent = value;
     });
 
-    updateLeaderVisuals();
     if (stopAudio) audioManager.stopMusic();
 }
 
@@ -432,9 +424,6 @@ function prepareNextRound() {
     document.querySelector('.player-side').classList.remove('passed');
     document.querySelector('.opponent-side').classList.remove('passed');
     updateTurnVisuals();
-
-    activeWeather = { frost: false, fog: false, rain: false };
-    updateWeatherVisuals();
 
     // 3. Reset UI Controls
     const passBtn = document.getElementById('pass-button');

@@ -26,15 +26,13 @@ flowchart TD
 2. `js/data/cards.js`
 3. `js/core/state.js`
 4. `js/core/audio.js`
-5. `js/core/abilities.js`
-6. `js/core/leaders.js`
-7. `js/core/ai.js`
-8. `js/core/engine.js`
-9. `js/ui/render.js`
-10. `js/ui/interactions.js`
-11. `js/ui/mulligan.js`
-12. `js/deckbuilder.js`
-13. `js/main.js`
+5. `js/core/ai.js`
+6. `js/core/engine.js`
+7. `js/ui/render.js`
+8. `js/ui/interactions.js`
+9. `js/ui/mulligan.js`
+10. `js/deckbuilder.js`
+11. `js/main.js`
 
 Essa ordem e parte do contrato atual do projeto. Como os arquivos nao usam ES Modules, funcoes e constantes precisam existir globalmente antes de serem chamadas.
 
@@ -44,14 +42,12 @@ Essa ordem e parte do contrato atual do projeto. Como os arquivos nao usam ES Mo
 | --- | --- |
 | `index.html` | Estrutura das duas cenas: deck builder e batalha. |
 | `css/style.css` | Layout, cartas, tabuleiro, modais, animacoes, mulligan e deck builder. |
-| `js/data/cards.js` | Dados de cartas, lideres, validacao de deck e helpers de colecao. |
+| `js/data/cards.js` | Dados de cartas, validacao de deck e helpers de colecao. |
 | `js/utils/helpers.js` | Constantes de icones e descricoes de habilidades. |
-| `js/core/state.js` | Estado global da partida, rodada, clima, cemiterios e mulligan. |
+| `js/core/state.js` | Estado global da partida, rodada, cemiterios, timers e mulligan. |
 | `js/core/audio.js` | Musica, efeitos sonoros, cache de audio e mute persistido. |
-| `js/core/abilities.js` | Habilidades de cartas: clima, medico, espiao, scorch e decoy. |
-| `js/core/leaders.js` | Inicializacao, renderizacao, uso e IA dos lideres. |
 | `js/core/ai.js` | Decisao do oponente por prioridades. |
-| `js/core/engine.js` | Pontuacao, turnos, fim de rodada, fim de jogo e reset. |
+| `js/core/engine.js` | Compra, pontuacao, turnos, fim de rodada, fim de jogo e reset. |
 | `js/ui/render.js` | Criacao visual das cartas e atualizacao de contadores. |
 | `js/ui/interactions.js` | Drag and drop das cartas do jogador. |
 | `js/ui/mulligan.js` | Fase de troca inicial de cartas. |
@@ -62,13 +58,12 @@ Essa ordem e parte do contrato atual do projeto. Como os arquivos nao usam ES Mo
 
 O estado principal vive em `js/core/state.js`:
 
-- `activeWeather`: clima ativo por fileira.
 - `enemyHand`, `playerDeck`, `enemyDeck`: cartas em mao e decks restantes.
 - `playerPassed`, `enemyPassed`, `isProcessingTurn`: controle de turno.
 - `playerWins`, `enemyWins`: placar da partida.
 - `playerGraveyard`, `enemyGraveyard`: cartas descartadas ou destruidas.
-- `playerLeader`, `enemyLeader`: lideres da partida.
 - `mulliganHand`, `mulliganRedraws`: estado temporario do mulligan.
+- `pendingGameTimers`: tarefas assincronas pertencentes a sessao atual.
 
 O deck escolhido pelo jogador fica em `playerDeckIds`, definido em `js/deckbuilder.js`, e e salvo em `localStorage` com a chave `kingdomOfAen_playerDeck`.
 
@@ -77,7 +72,7 @@ O deck escolhido pelo jogador fica em `playerDeckIds`, definido em `js/deckbuild
 1. `DOMContentLoaded` em `deckbuilder.js` chama `initDeckBuilder()`.
 2. O deck salvo e carregado do `localStorage`.
 3. A colecao e o deck sao renderizados.
-4. `DOMContentLoaded` em `main.js` configura drag and drop, controles, lideres e audio.
+4. `DOMContentLoaded` em `main.js` configura drag and drop, controles e audio.
 5. Ao clicar em iniciar batalha, `startBattle()` valida o deck e chama `initializeGameWithDeck(playerDeckIds)`.
 6. O jogador e o inimigo compram 10 cartas.
 7. O mulligan inicia antes da batalha ficar jogavel.
@@ -106,14 +101,14 @@ Campos relevantes:
 - `baseId`: identificador da carta base.
 - `type`: fileira principal: `melee`, `ranged` ou `siege`.
 - `row: "all"`: carta agile, pode ir em qualquer fileira.
-- `category`: `unit` ou `special`, usado principalmente pela validacao do deck.
-- `ability`: habilidade lida por `triggerAbility()`.
-- `isHero`: carta imune a clima e scorch.
+- `category`: `unit`, usado pela validacao do deck.
+- `ability`: `bond_partner` ou `hero` no recorte atual.
+- `partner`: nome da unidade necessaria para ativar `bond_partner`.
+- `isHero`: identifica unidades heroicas.
 
-## Pontos de Atenção
+## Contratos de Execucao
 
-- `shuffleArray()` existe em `js/utils/helpers.js` e tambem em `js/data/cards.js`.
-- `createDefaultDeck()` verifica `card.type === 'unit'`, mas os dados usam `category: 'unit'`.
-- O drop de especiais verifica `card.dataset.kind`, mas `createCardElement()` define `dataset.category`.
-- Varias referencias de arte apontam para `assets/*.png`, pasta que nao existe atualmente.
-- Algumas habilidades estao implementadas, mas nao possuem cartas na colecao atual.
+- Uma sessao nova sempre cancela timers pertencentes a sessao anterior.
+- A IA conclui toda a sua acao antes de liberar a entrada do jogador.
+- Cartas sem arte cadastrada usam o fallback visual e nao apontam para arquivos inexistentes.
+- Toda habilidade presente nos dados precisa ter regra alcancavel, descricao e cobertura de teste.

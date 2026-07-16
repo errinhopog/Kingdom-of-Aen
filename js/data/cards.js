@@ -1,42 +1,4 @@
 // ============================================
-// ===       CARTAS DE LÍDER               ===
-// ============================================
-const leaderCardsData = [
-    {
-        id: 'leader_general',
-        name: 'O General',
-        ability: 'leader_clear_weather',
-        description: 'Limpa todos os efeitos climáticos do campo de batalha.',
-        faction: 'alfredolandia',
-        isLeader: true
-    },
-    {
-        id: 'leader_usurper',
-        name: 'O Usurpador',
-        ability: 'leader_scorch_siege',
-        description: 'Destrói a carta mais forte na fileira de Cerco inimiga.',
-        faction: 'reinos_sombrios',
-        isLeader: true
-    },
-    {
-        id: 'leader_archmage',
-        name: 'O Arquimago',
-        ability: 'leader_draw_card',
-        description: 'Compra 1 carta do deck imediatamente.',
-        faction: 'torre_arcana',
-        isLeader: true
-    },
-    {
-        id: 'leader_warlord',
-        name: 'O Senhor da Guerra',
-        ability: 'leader_boost_melee',
-        description: 'Adiciona +2 de poder a todas as unidades na fileira Melee.',
-        faction: 'horda_selvagem',
-        isLeader: true
-    }
-];
-
-// ============================================
 // ===       COLEÇÃO COMPLETA DE CARTAS    ===
 // ============================================
 // Cada carta tem um ID único para permitir múltiplas cópias no deck
@@ -109,25 +71,19 @@ const CARD_COLLECTION = [
     { id: 'eliel_1', baseId: 'eliel', name: 'Eliel', type: 'siege', power: 6, category: 'unit' },
     { id: 'eliel_2', baseId: 'eliel', name: 'Eliel', type: 'siege', power: 6, category: 'unit' },
     
-    { id: 'ritatril_1', baseId: 'ritatril', name: 'Ritatril', type: 'siege', power: 3, ability: 'medic', category: 'unit' },
-    { id: 'ritatril_2', baseId: 'ritatril', name: 'Ritatril', type: 'siege', power: 3, ability: 'medic', category: 'unit' },
+    { id: 'ritatril_1', baseId: 'ritatril', name: 'Ritatril', type: 'siege', power: 3, category: 'unit' },
+    { id: 'ritatril_2', baseId: 'ritatril', name: 'Ritatril', type: 'siege', power: 3, category: 'unit' },
 
     // =========================================
     // HERÓI (1 Cópia - Única)
     // =========================================
-    { id: 'marcus_1', baseId: 'marcus', name: 'Sir Marcus O Rei', type: 'siege', power: 9, ability: 'hero', description: 'O rei da Alfredolândia. Imune a efeitos.', isHero: true, category: 'unit' },
+    { id: 'marcus_1', baseId: 'marcus', name: 'Sir Marcus O Rei', type: 'siege', power: 9, ability: 'hero', description: 'O rei da Alfredolândia.', isHero: true, category: 'unit' },
 
     // =========================================
-    // ESPECIAIS - AGILE (Row: 'all')
+    // UNIDADES AGILE (Row: 'all')
     // =========================================
-    { id: 'geleia_1', baseId: 'geleia', name: 'Geleia Espião', type: 'melee', row: 'all', power: 3, img: 'img/personagens/Geleia.png', ability: 'spy_medic', category: 'special' },
-    { id: 'corredores_1', baseId: 'corredores', name: 'Corredores Espião', type: 'melee', row: 'all', power: 5, img: 'img/personagens/Corredores.png', ability: 'spy_medic', category: 'special' },
-    
     { id: 'cozinheiros_1', baseId: 'cozinheiros', name: 'Cozinheiros', type: 'melee', row: 'all', power: 3, img: 'img/personagens/Cozinheiros.png', category: 'unit' },
-    { id: 'cozinheiros_2', baseId: 'cozinheiros', name: 'Cozinheiros', type: 'melee', row: 'all', power: 3, img: 'img/personagens/Cozinheiros.png', category: 'unit' },
-    
-    { id: 'espantalho_1', baseId: 'espantalho', name: 'Espantalho', type: 'melee', row: 'all', power: 0, img: 'img/personagens/Espantalho.png', ability: 'decoy', category: 'special' },
-    { id: 'espantalho_2', baseId: 'espantalho', name: 'Espantalho', type: 'melee', row: 'all', power: 0, img: 'img/personagens/Espantalho.png', ability: 'decoy', category: 'special' }
+    { id: 'cozinheiros_2', baseId: 'cozinheiros', name: 'Cozinheiros', type: 'melee', row: 'all', power: 3, img: 'img/personagens/Cozinheiros.png', category: 'unit' }
 ];
 
 // ============================================
@@ -149,40 +105,32 @@ function getCardsByType(type) {
     return CARD_COLLECTION.filter(card => card.type === type);
 }
 
-/** Conta quantas unidades e especiais existem em um array de IDs */
+/** Conta unidades e poder total em um array de IDs */
 function countDeckComposition(deckIds) {
     let units = 0;
-    let specials = 0;
     let totalPower = 0;
     
     deckIds.forEach(id => {
         const card = getCardById(id);
         if (card) {
-            if (card.category === 'special') {
-                specials++;
-            } else {
-                units++;
-            }
+            units++;
             totalPower += card.power || 0;
         }
     });
     
-    return { units, specials, total: units + specials, totalPower };
+    return { units, total: units, totalPower };
 }
 
-/** Valida se um deck está dentro das regras (Mín 22 unidades, Máx 10 especiais) */
+/** Valida se um deck possui pelo menos 22 unidades. */
 function validateDeck(deckIds) {
-    const { units, specials } = countDeckComposition(deckIds);
+    const { units } = countDeckComposition(deckIds);
     
     const errors = [];
     if (units < 22) {
         errors.push(`Precisa de pelo menos 22 unidades (atual: ${units})`);
     }
-    if (specials > 10) {
-        errors.push(`Máximo de 10 especiais permitido (atual: ${specials})`);
-    }
-    
-    return { valid: errors.length === 0, errors, units, specials };
+
+    return { valid: errors.length === 0, errors, units };
 }
 
 /** Converte array de IDs em array de objetos de carta (clonados) */

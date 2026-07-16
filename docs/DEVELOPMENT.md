@@ -24,7 +24,7 @@ Depois acesse `http://localhost:8080`.
 | --- | --- |
 | Adicionar cartas | `js/data/cards.js` |
 | Ajustar regra de deck | `js/data/cards.js`, `js/deckbuilder.js` |
-| Criar habilidade | `js/core/abilities.js`, `js/utils/helpers.js`, `js/core/ai.js` |
+| Ajustar habilidade do MVP | `js/core/engine.js`, `js/utils/helpers.js`, `js/core/ai.js` |
 | Ajustar IA | `js/core/ai.js` |
 | Ajustar pontuacao | `js/core/engine.js` |
 | Ajustar visual das cartas | `js/ui/render.js`, `css/style.css` |
@@ -57,14 +57,9 @@ Exemplo:
 }
 ```
 
-## Adicionando uma Habilidade
+## Alterando uma Habilidade
 
-1. Defina o identificador da habilidade no objeto da carta.
-2. Adicione uma descricao em `ABILITY_DESCRIPTIONS`.
-3. Adicione um `case` em `triggerAbility()`.
-4. Implemente a funcao em `js/core/abilities.js`.
-5. Se a IA puder usar essa habilidade, inclua a prioridade em `js/core/ai.js`.
-6. Garanta que `updateScore()` reflita qualquer efeito persistente.
+O MVP aceita apenas `bond_partner` e `hero`. Uma expansao desse conjunto deve incluir a regra no motor, prioridade correspondente na IA quando aplicavel, descricao na interface, dados alcancaveis e testes automatizados na mesma mudanca.
 
 ## Checklist Manual de Teste
 
@@ -76,7 +71,7 @@ Antes de considerar uma alteracao pronta:
 - A validacao impede iniciar com deck invalido.
 - O mulligan permite no maximo 2 trocas.
 - Cartas so entram em fileiras validas.
-- Espantalho troca com alvo valido e volta a carta para a mao.
+- Vinculos de parceiros alteram a pontuacao apenas na mesma fileira.
 - O botao de passar encerra a rodada quando os dois lados passam.
 - O placar e as gemas atualizam corretamente.
 - O modal final aparece ao atingir 2 vitorias.
@@ -121,5 +116,5 @@ JSON.parse(localStorage.getItem('kingdomOfAen_playerDeck') || '[]')
 - Nao altere a ordem dos scripts sem migrar para ES Modules ou outro sistema de modulos.
 - Evite criar novas globais quando uma funcao existente ja cobre o fluxo.
 - Sempre verifique caminhos de imagens e audios.
-- Se uma carta especial deve ser removida apos uso, alinhe `category`, `kind` e a logica de drop antes.
+- Nao adicione uma habilidade aos dados antes de sua regra estar implementada e testada.
 - Se uma regra muda a pontuacao, revise `updateScore()`.

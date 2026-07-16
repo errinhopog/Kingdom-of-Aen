@@ -14,13 +14,9 @@ function initializeGame() {
         enemyHand.push({ ...randomCard, id: `e${i}_${randomCard.id}` });
     }
 
-    // Initialize Leaders
-    initializeLeaders();
-
     updateScore();
     updateEnemyHandUI();
     updateTurnVisuals();
-    updateLeaderVisuals();
 }
 
 /**
@@ -70,10 +66,7 @@ function initializeGameWithDeck(deckIds) {
     }));
     console.log('[DEBUG initializeGameWithDeck] enemyHand length after draw:', enemyHand.length);
 
-    // 5. Inicializar Líderes
-    initializeLeaders();
-
-    // 6. INICIAR FASE DE MULLIGAN
+    // 5. INICIAR FASE DE MULLIGAN
     startMulligan(playerStartingHand);
 
     console.log("=== AGUARDANDO MULLIGAN ===");
@@ -122,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // NÃO inicializar automaticamente - esperar pelo Deck Builder
     setupDragAndDrop();
     setupControls();
-    setupLeaders();
 
     // Start music on first user interaction (browser gesture requirement)
     document.addEventListener('click', () => {

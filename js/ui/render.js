@@ -85,7 +85,6 @@ function createCardElement(card) {
 
     // Classes especiais
     if (card.isHero) el.classList.add('hero-card');
-    if (card.ability === 'spy' || card.ability === 'spy_medic') el.classList.add('spy-card');
     if (card.row === 'all') el.classList.add('agile-card');
 
     // Imagem de fundo do personagem
@@ -147,93 +146,5 @@ function createCardElement(card) {
     el.addEventListener('dragstart', dragStart);
     el.addEventListener('dragend', dragEnd);
 
-    // Drop Events for Decoy Interaction
-    el.addEventListener('dragover', function (e) {
-        const draggingCard = document.querySelector('.dragging');
-        if (!draggingCard) return;
-
-        const isDecoy = draggingCard.dataset.ability === 'decoy';
-        if (!isDecoy) return;
-
-        const targetCard = e.currentTarget;
-
-        const row = targetCard.closest('.row');
-        if (!row || !row.classList.contains('player')) return;
-
-        if (targetCard.dataset.isHero === "true") return;
-        if (targetCard.dataset.ability === 'decoy') return;
-
-        e.preventDefault();
-        e.stopPropagation();
-        targetCard.classList.add('valid-target');
-    });
-
-    el.addEventListener('dragleave', function (e) {
-        e.currentTarget.classList.remove('valid-target');
-    });
-
-    el.addEventListener('drop', function (e) {
-        const targetCard = e.currentTarget;
-        targetCard.classList.remove('valid-target');
-
-        const draggingCard = document.querySelector('.dragging');
-        if (!draggingCard) return;
-
-        const isDecoy = draggingCard.dataset.ability === 'decoy';
-        if (!isDecoy) return;
-
-        const row = targetCard.closest('.row');
-        if (!row || !row.classList.contains('player')) return;
-        if (targetCard.dataset.isHero === "true") return;
-        if (targetCard.dataset.ability === 'decoy') return;
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        console.log(`Decoy (Manual) ativado! Trocando com: ${targetCard.dataset.name}`);
-
-        // 1. Return Target to Hand
-        const returnedCardObj = {
-            id: targetCard.dataset.id,
-            name: targetCard.dataset.name,
-            type: targetCard.dataset.type,
-            power: parseInt(targetCard.dataset.basePower),
-            ability: targetCard.dataset.ability,
-            isHero: targetCard.dataset.isHero === "true",
-            partner: targetCard.dataset.partner,
-            row: targetCard.dataset.row
-        };
-
-        const handContainer = document.querySelector('.hand-cards');
-        if (handContainer) {
-            const newHandCard = createCardElement(returnedCardObj);
-            handContainer.appendChild(newHandCard);
-        }
-
-        // 2. Place Decoy in Target's Spot
-        const parent = targetCard.parentNode;
-        parent.insertBefore(draggingCard, targetCard);
-        targetCard.remove();
-
-        // 3. Finalize Decoy State
-        draggingCard.draggable = false;
-        draggingCard.classList.remove('dragging');
-
-        // 4. Update Game State
-        updateScore();
-
-        try { audioManager.playSFX('card-place'); } catch (e) { console.warn('SFX failed', e); }
-
-        // 5. Trigger Enemy Turn
-        if (!enemyPassed) {
-            queueEnemyTurn();
-        }
-    });
-
     return el;
 }
-
-// Deprecated functions (logic moved inline)
-function cardDragOver(e) { }
-function cardDragLeave(e) { }
-function cardDrop(e) { }

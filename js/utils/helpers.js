@@ -28,18 +28,8 @@ const ROW_ICONS = {
  * @constant {Object.<string, string>}
  */
 const ABILITY_DESCRIPTIONS = {
-    spy: 'Espião',
-    spy_medic: 'Espião Médico',
-    medic: 'Médico',
     bond_partner: 'Vínculo',
-    tight_bond: 'Vínculo Forte',
-    decoy: 'Espantalho',
-    scorch: 'Queimar',
-    hero: 'Herói',
-    weather_frost: 'Geada',
-    weather_fog: 'Névoa',
-    weather_rain: 'Chuva',
-    weather_clear: 'Limpar Clima'
+    hero: 'Herói'
 };
 
 // ============================================

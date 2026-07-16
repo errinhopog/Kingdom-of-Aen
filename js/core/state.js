@@ -5,16 +5,6 @@
  */
 
 // ============================================
-// ===       ESTADO DO CLIMA               ===
-// ============================================
-
-/**
- * Estado atual do clima no tabuleiro
- * @type {{frost: boolean, fog: boolean, rain: boolean}}
- */
-let activeWeather = { frost: false, fog: false, rain: false };
-
-// ============================================
 // ===       ESTADO DAS MÃOS               ===
 // ============================================
 
@@ -115,34 +105,6 @@ let playerGraveyard = [];
 let enemyGraveyard = [];
 
 // ============================================
-// ===       LÍDERES                       ===
-// ============================================
-
-/**
- * Líder do jogador
- * @type {Object|null}
- */
-let playerLeader = null;
-
-/**
- * Líder do inimigo
- * @type {Object|null}
- */
-let enemyLeader = null;
-
-/**
- * Se o líder do jogador já foi usado
- * @type {boolean}
- */
-let playerLeaderUsed = false;
-
-/**
- * Se o líder do inimigo já foi usado
- * @type {boolean}
- */
-let enemyLeaderUsed = false;
-
-// ============================================
 // ===       MULLIGAN                      ===
 // ============================================
 
@@ -159,16 +121,6 @@ let mulliganHand = [];
 let mulliganRedraws = 2;
 
 // ============================================
-// ===       FACÇÃO                        ===
-// ============================================
-
-/**
- * Facção do jogador (afeta passivas)
- * @constant {string}
- */
-const PLAYER_FACTION = 'alfredolandia';
-
-// ============================================
 // ===       FUNÇÕES DE RESET              ===
 // ============================================
 
@@ -178,7 +130,6 @@ const PLAYER_FACTION = 'alfredolandia';
  */
 function resetGameState() {
     cancelPendingGameTasks();
-    activeWeather = { frost: false, fog: false, rain: false };
     enemyHand = [];
     playerDeck = [];
     enemyDeck = [];
@@ -189,10 +140,6 @@ function resetGameState() {
     enemyWins = 0;
     playerGraveyard = [];
     enemyGraveyard = [];
-    playerLeader = null;
-    enemyLeader = null;
-    playerLeaderUsed = false;
-    enemyLeaderUsed = false;
     mulliganHand = [];
     mulliganRedraws = 2;
 }
@@ -202,7 +149,6 @@ function resetGameState() {
  * @returns {void}
  */
 function resetRoundState() {
-    activeWeather = { frost: false, fog: false, rain: false };
     playerPassed = false;
     enemyPassed = false;
     isProcessingTurn = false;
@@ -212,4 +158,4 @@ function resetRoundState() {
 // ===       EXPORTS (Futuros ES6 Modules) ===
 // ============================================
 // Quando migrar para ES6 Modules, exportar o estado como objeto
-// export { activeWeather, enemyHand, playerDeck, ... };
+// export { enemyHand, playerDeck, enemyDeck, ... };

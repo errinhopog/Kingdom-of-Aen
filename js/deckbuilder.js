@@ -34,17 +34,11 @@ function renderCollection() {
     // Filtra e ordena as cartas
     let cardsToShow = CARD_COLLECTION.filter(card => {
         if (currentFilter === 'all') return true;
-        if (currentFilter === 'special') return card.category === 'special';
-        // Usar o tipo da carta para filtro (melee/ranged/siege)
-        return card.type === currentFilter && card.category !== 'special';
+        return card.type === currentFilter;
     });
     
     // Ordena: primeiro por tipo (units, depois specials), depois por poder
     cardsToShow.sort((a, b) => {
-        // Especiais por último
-        if (a.category === 'special' && b.category !== 'special') return 1;
-        if (a.category !== 'special' && b.category === 'special') return -1;
-        // Por poder (maior primeiro)
         return (b.power || 0) - (a.power || 0);
     });
     
@@ -69,10 +63,6 @@ function createBuilderCard(card) {
         div.classList.add('in-deck');
     }
     
-    // Classe especial para tipo
-    if (card.category === 'special') {
-        div.classList.add('special');
-    }
     if (card.isHero) {
         div.classList.add('hero');
     }
@@ -83,24 +73,17 @@ function createBuilderCard(card) {
         ranged: '🏹',
         siege: '🏰'
     };
-    const rowIcon = card.category === 'special' ? '✨' : (rowIcons[card.type] || '');
+    const rowIcon = rowIcons[card.type] || '';
     
     // Ícone de habilidade
     const abilityIcons = {
-        spy: '🕵️',
-        spy_medic: '🕵️',
-        medic: '💉',
         bond_partner: '🔗',
-        decoy: '🎭',
-        scorch: '🔥',
-        weather: '🌨️',
-        clear_weather: '☀️',
         hero: '👑'
     };
     const abilityIcon = abilityIcons[card.ability] || '';
     
     div.innerHTML = `
-        ${card.category !== 'special' || card.power > 0 ? `<div class="card-strength-badge">${card.power}</div>` : ''}
+        <div class="card-strength-badge">${card.power}</div>
         <div class="row-icon">${rowIcon}</div>
         <div class="card-img-placeholder"></div>
         <div class="card-name">${card.name}</div>
@@ -128,9 +111,6 @@ function renderDeck() {
     
     // Ordena por fileira e poder
     deckCards.sort((a, b) => {
-        // Especiais por último
-        if (a.category === 'special' && b.category !== 'special') return 1;
-        if (a.category !== 'special' && b.category === 'special') return -1;
         // Por tipo (melee, ranged, siege)
         const rowOrder = { melee: 0, ranged: 1, siege: 2 };
         const rowDiff = (rowOrder[a.type] || 3) - (rowOrder[b.type] || 3);
@@ -155,12 +135,8 @@ function createDeckCard(card) {
         div.classList.add('has-art');
     }
     
-    if (card.category === 'special') {
-        div.classList.add('special');
-    }
-    
     div.innerHTML = `
-        ${card.category !== 'special' || card.power > 0 ? `<div class="card-strength-badge">${card.power}</div>` : ''}
+        <div class="card-strength-badge">${card.power}</div>
         <div class="card-name">${card.name}</div>
         <div class="remove-hint">✕</div>
     `;
@@ -245,12 +221,10 @@ function updateStats() {
     // Atualiza valores
     document.getElementById('stat-total').textContent = composition.total;
     document.getElementById('stat-units').textContent = composition.units;
-    document.getElementById('stat-specials').textContent = composition.specials;
     document.getElementById('stat-power').textContent = composition.totalPower;
     
     // Atualiza classes de validação
     const unitsItem = document.getElementById('stat-units').closest('.stat-item');
-    const specialsItem = document.getElementById('stat-specials').closest('.stat-item');
     
     // Unidades: válido se >= 22
     if (composition.units >= 22) {
@@ -259,15 +233,6 @@ function updateStats() {
     } else {
         unitsItem.classList.add('invalid');
         unitsItem.classList.remove('valid');
-    }
-    
-    // Especiais: válido se <= 10
-    if (composition.specials <= 10) {
-        specialsItem.classList.add('valid');
-        specialsItem.classList.remove('invalid');
-    } else {
-        specialsItem.classList.add('invalid');
-        specialsItem.classList.remove('valid');
     }
     
     // Mensagem de validação

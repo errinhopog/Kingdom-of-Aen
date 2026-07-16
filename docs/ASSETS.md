@@ -24,12 +24,9 @@ Icones:
 Personagens referenciados por cartas e encontrados:
 
 - `img/personagens/Adriano.png`
-- `img/personagens/Corredores.png`
 - `img/personagens/Cozinheiros.png`
 - `img/personagens/Daniel.png`
-- `img/personagens/Espantalho.png`
 - `img/personagens/Gabriel.png`
-- `img/personagens/Geleia.png`
 - `img/personagens/Suelly.png`
 - `img/personagens/Thiago.png`
 - `img/personagens/Wellington.png`
@@ -38,7 +35,10 @@ Personagens existentes, mas ainda nao referenciados diretamente na colecao atual
 
 - `img/personagens/Ana Rita.png`
 - `img/personagens/Carol.png`
+- `img/personagens/Corredores.png`
 - `img/personagens/Ciça.png`
+- `img/personagens/Espantalho.png`
+- `img/personagens/Geleia.png`
 - `img/personagens/Marco.png`
 - `img/personagens/Paty.png`
 - `img/personagens/Renata.png`
