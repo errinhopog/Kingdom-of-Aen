@@ -142,7 +142,7 @@ function applyMedic(cardElement, currentRow) {
         targetContainer.appendChild(newCardElement);
 
         // Trigger Ability of the revived card! (Chain Reaction)
-        setTimeout(() => {
+        scheduleGameTask(() => {
             triggerAbility(newCardElement, targetContainer.closest('.row'));
             updateScore();
         }, 300);
@@ -293,7 +293,7 @@ function applyScorch(cardElement, currentRow) {
 
         targets.forEach(card => {
             card.classList.add('burning');
-            setTimeout(() => {
+            scheduleGameTask(() => {
                 // Add to graveyard before removing
                 const cardObj = {
                     id: card.dataset.id,

@@ -356,6 +356,9 @@ function startBattle() {
         alert('Deck inválido! ' + validation.errors.join(' '));
         return;
     }
+
+    disposeGameSession();
+
     // Play shuffle SFX when starting the battle
     try { audioManager.playSFX('shuffle'); } catch (e) { console.warn('SFX failed', e); }
 
@@ -368,6 +371,8 @@ function startBattle() {
 }
 
 function backToBuilder() {
+    disposeGameSession({ stopAudio: true });
+
     // Esconde a batalha e o modal
     document.getElementById('scene-battle').classList.remove('active');
     document.getElementById('game-over-modal').classList.add('hidden');

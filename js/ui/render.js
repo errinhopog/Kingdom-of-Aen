@@ -228,7 +228,7 @@ function createCardElement(card) {
         if (!enemyPassed) {
             isProcessingTurn = true;
             updateTurnVisuals();
-            setTimeout(() => {
+            scheduleGameTask(() => {
                 enemyTurn();
                 isProcessingTurn = false;
                 updateTurnVisuals();

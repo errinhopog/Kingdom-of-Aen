@@ -124,7 +124,7 @@ function executeLeaderAbility(ability, who) {
                     const targets = vulnerable.filter(c => parseInt(c.dataset.power) === maxPower);
                     targets.forEach(card => {
                         card.classList.add('burning');
-                        setTimeout(() => {
+                        scheduleGameTask(() => {
                             const cardObj = {
                                 id: card.dataset.id,
                                 name: card.dataset.name,

@@ -141,7 +141,7 @@ function drop(e) {
                 if (!enemyPassed) {
                     isProcessingTurn = true;
                     updateTurnVisuals();
-                    setTimeout(() => {
+                    scheduleGameTask(() => {
                         enemyTurn();
                         isProcessingTurn = false;
                         updateTurnVisuals();
@@ -167,7 +167,7 @@ function drop(e) {
                 // Handle one-shot special cards (spells) - Remove after use
                 const oneShotAbilities = ['scorch', 'weather_frost', 'weather_fog', 'weather_rain', 'weather_clear'];
                 if (card.dataset.category === 'special' && oneShotAbilities.includes(card.dataset.ability)) {
-                    setTimeout(() => {
+                    scheduleGameTask(() => {
                         const cardObj = {
                             id: card.dataset.id,
                             name: card.dataset.name,
@@ -187,7 +187,7 @@ function drop(e) {
                 if (!enemyPassed) {
                     isProcessingTurn = true;
                     updateTurnVisuals();
-                    setTimeout(() => {
+                    scheduleGameTask(() => {
                         enemyTurn();
                         isProcessingTurn = false;
                         updateTurnVisuals();
