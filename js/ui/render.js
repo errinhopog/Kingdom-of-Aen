@@ -226,13 +226,7 @@ function createCardElement(card) {
 
         // 5. Trigger Enemy Turn
         if (!enemyPassed) {
-            isProcessingTurn = true;
-            updateTurnVisuals();
-            scheduleGameTask(() => {
-                enemyTurn();
-                isProcessingTurn = false;
-                updateTurnVisuals();
-            }, 1500);
+            queueEnemyTurn();
         }
     });
 

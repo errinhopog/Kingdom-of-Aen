@@ -139,13 +139,7 @@ function drop(e) {
 
                 // Trigger Enemy Turn
                 if (!enemyPassed) {
-                    isProcessingTurn = true;
-                    updateTurnVisuals();
-                    scheduleGameTask(() => {
-                        enemyTurn();
-                        isProcessingTurn = false;
-                        updateTurnVisuals();
-                    }, 1500);
+                    queueEnemyTurn();
                 }
             } else {
                 // Move card to the row's card container
@@ -185,13 +179,7 @@ function drop(e) {
 
                 // Trigger Enemy Turn
                 if (!enemyPassed) {
-                    isProcessingTurn = true;
-                    updateTurnVisuals();
-                    scheduleGameTask(() => {
-                        enemyTurn();
-                        isProcessingTurn = false;
-                        updateTurnVisuals();
-                    }, 1500);
+                    queueEnemyTurn();
                 }
             }
         }

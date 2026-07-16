@@ -65,6 +65,7 @@ function setupLeaders() {
                 return;
             }
             activateLeader('player');
+            if (!enemyPassed) queueEnemyTurn();
         });
     }
 }

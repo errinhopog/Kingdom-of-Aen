@@ -103,6 +103,9 @@ function updateScore() {
 // ===       CONTROLE DE TURNOS            ===
 // ============================================
 
+const ENEMY_TURN_DELAY_MS = 1500;
+const ENEMY_EFFECT_SETTLE_MS = 850;
+
 /**
  * Passa o turno para um jogador
  * @param {string} who - 'player' ou 'opponent'
@@ -138,28 +141,44 @@ function updateTurnVisuals() {
     updateLeaderVisuals();
 }
 
-/**
- * Loop de turnos do inimigo - continua jogando até passar
- */
-function enemyTurnLoop() {
-    if (enemyPassed) return;
+/** Finaliza a ação da IA e devolve o controle ao jogador. */
+function finishEnemyAction() {
+    isProcessingTurn = false;
+    updateTurnVisuals();
+}
 
-    console.debug('[DEBUG enemyTurnLoop] starting loop iteration; enemyPassed=', enemyPassed);
+/**
+ * Agenda uma jogada da IA. No modo contínuo, a IA segue jogando até passar.
+ * @param {boolean} continuous
+ */
+function scheduleEnemyAction(continuous) {
+    scheduleGameTask(() => {
+        enemyTurn();
+
+        if (continuous && !enemyPassed) {
+            scheduleEnemyAction(true);
+            return;
+        }
+
+        scheduleGameTask(finishEnemyAction, ENEMY_EFFECT_SETTLE_MS);
+    }, ENEMY_TURN_DELAY_MS);
+}
+
+/**
+ * Solicita uma ação da IA e bloqueia novas entradas até a conclusão.
+ * @param {{continuous?: boolean}} options
+ */
+function queueEnemyTurn({ continuous = false } = {}) {
+    if (enemyPassed || isProcessingTurn) return;
 
     isProcessingTurn = true;
     updateTurnVisuals();
+    scheduleEnemyAction(continuous);
+}
 
-    scheduleGameTask(() => {
-        enemyTurn();
-        if (!enemyPassed) {
-            console.debug('[DEBUG enemyTurnLoop] scheduling next iteration (enemy still active)');
-            enemyTurnLoop();
-        } else {
-            console.debug('[DEBUG enemyTurnLoop] enemy passed — stopping loop');
-            isProcessingTurn = false;
-            updateTurnVisuals();
-        }
-    }, 1500);
+/** Loop da IA usado depois que o jogador passa a rodada. */
+function enemyTurnLoop() {
+    queueEnemyTurn({ continuous: true });
 }
 
 // ============================================

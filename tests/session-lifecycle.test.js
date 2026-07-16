@@ -52,16 +52,31 @@ function loadLifecycleHarness() {
 
     let nextTimerId = 1;
     const clearedTimers = [];
+    const timerCallbacks = new Map();
+    let enemyTurns = 0;
     const audio = { stopped: false, stopMusic() { this.stopped = true; } };
     const context = {
         audioManager: audio,
-        clearTimeout(timerId) { clearedTimers.push(timerId); },
+        clearTimeout(timerId) {
+            clearedTimers.push(timerId);
+            timerCallbacks.delete(timerId);
+        },
         console,
         document: {
             getElementById: id => elementsById[id] || null,
+            querySelector: selector => {
+                if (selector === '.player-side') return visualElements[0];
+                if (selector === '.opponent-side') return visualElements[1];
+                return null;
+            },
             querySelectorAll: selector => selectors.get(selector) || []
         },
-        setTimeout() { return nextTimerId++; },
+        enemyTurn() { enemyTurns++; },
+        setTimeout(callback) {
+            const timerId = nextTimerId++;
+            timerCallbacks.set(timerId, callback);
+            return timerId;
+        },
         updateLeaderVisuals() {}
     };
     context.globalThis = context;
@@ -73,13 +88,31 @@ function loadLifecycleHarness() {
         `globalThis.lifecycle = {
             cancelPendingGameTasks,
             disposeGameSession,
+            isProcessing: () => isProcessingTurn,
             pendingGameTimers,
+            queueEnemyTurn,
             scheduleGameTask
         };`
     ].join('\n');
     vm.runInContext(source, context);
 
-    return { audio, clearedTimers, containers, elementsById, gems, lifecycle: context.lifecycle, toast, visualElements };
+    return {
+        audio,
+        clearedTimers,
+        containers,
+        elementsById,
+        enemyTurns: () => enemyTurns,
+        gems,
+        lifecycle: context.lifecycle,
+        runNextTimer() {
+            const next = [...timerCallbacks.entries()].sort(([a], [b]) => a - b)[0];
+            assert.ok(next, 'expected a pending timer');
+            timerCallbacks.delete(next[0]);
+            next[1]();
+        },
+        toast,
+        visualElements
+    };
 }
 
 test('disposeGameSession cancela timers e limpa toda a UI da partida', () => {
@@ -106,4 +139,19 @@ test('disposeGameSession cancela timers e limpa toda a UI da partida', () => {
     ['score-total-player', 'score-total-opponent', 'enemy-hand-count', 'player-deck-count']
         .forEach(id => assert.equal(harness.elementsById[id].textContent, '0'));
     assert.equal(harness.audio.stopped, true);
+});
+
+test('queueEnemyTurn mantém a entrada bloqueada até o efeito terminar', () => {
+    const harness = loadLifecycleHarness();
+
+    harness.lifecycle.queueEnemyTurn();
+    assert.equal(harness.lifecycle.isProcessing(), true);
+    assert.equal(harness.enemyTurns(), 0);
+
+    harness.runNextTimer();
+    assert.equal(harness.enemyTurns(), 1);
+    assert.equal(harness.lifecycle.isProcessing(), true);
+
+    harness.runNextTimer();
+    assert.equal(harness.lifecycle.isProcessing(), false);
 });
