@@ -1,6 +1,6 @@
 import { GAME_ROWS, GAME_SIDES, calculateGameScore } from '../domain/game-state.js';
 import { ABILITY_DESCRIPTIONS, ROW_ICONS } from '../utils/helpers.js';
-import { dragEnd, dragStart } from './interactions.js';
+import { activateHandCard, dragEnd, dragStart, isCardSelected } from './interactions.js';
 
 // ============================================
 // ===       RENDERIZAÇÃO DE ELEMENTOS     ===
@@ -101,9 +101,13 @@ function updateDeckCountUI() {
  * @returns {HTMLElement} Elemento da carta
  */
 export function createCardElement(card) {
-    const el = document.createElement('div');
+    const el = document.createElement('button');
+    el.type = 'button';
     el.classList.add('card');
     el.draggable = true;
+    el.setAttribute('aria-label', `${card.name}, ${card.power} pontos, ${card.type}`);
+    el.setAttribute('aria-pressed', String(isCardSelected(card.instanceId)));
+    el.addEventListener('click', activateHandCard);
 
     syncCardElementInstance(el, card);
 

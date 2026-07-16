@@ -1,6 +1,7 @@
 import { audioManager } from '../core/audio.js';
 import { dispatchGameCommand, gameState, scheduleGameTask } from '../core/state.js';
 import { ABILITY_DESCRIPTIONS } from '../utils/helpers.js';
+import { closeAccessibleDialog, openAccessibleDialog } from './accessibility.js';
 
 // ============================================
 // ===       SISTEMA DE MULLIGAN           ===
@@ -25,7 +26,7 @@ export function startMulligan() {
     // Mostrar overlay
     const overlay = document.getElementById('mulligan-overlay');
     if (overlay) {
-        overlay.classList.remove('hidden');
+        openAccessibleDialog(overlay, document.getElementById('mulligan-confirm-btn'));
     }
 
     // Setup botão de confirmar
@@ -60,10 +61,12 @@ function renderMulliganCards() {
  * @returns {HTMLElement} Elemento da carta
  */
 function createMulliganCardElement(card, index) {
-    const el = document.createElement('div');
+    const el = document.createElement('button');
+    el.type = 'button';
     el.classList.add('mulligan-card');
     el.dataset.index = index;
     el.dataset.id = card.id;
+    el.setAttribute('aria-label', `Trocar ${card.name}, ${card.power} pontos`);
 
     // Background image
     if (card.img) {
@@ -188,7 +191,7 @@ function finishMulligan() {
     // 1. Esconder overlay
     const overlay = document.getElementById('mulligan-overlay');
     if (overlay) {
-        overlay.classList.add('hidden');
+        closeAccessibleDialog(overlay);
     }
 
     // 2. Entrar na batalha e reconstruir a UI a partir do estado.

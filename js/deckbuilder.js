@@ -66,9 +66,11 @@ function renderCollection() {
 }
 
 function createBuilderCard(card) {
-    const div = document.createElement('div');
+    const div = document.createElement('button');
+    div.type = 'button';
     div.className = 'builder-card';
     div.dataset.cardId = card.id;
+    div.setAttribute('aria-label', `Adicionar ${card.name}, ${card.power} pontos ao deck`);
 
     if (card.img) {
         div.style.backgroundImage = `url('${card.img}')`;
@@ -143,9 +145,11 @@ function renderDeck() {
 }
 
 function createDeckCard(card) {
-    const div = document.createElement('div');
+    const div = document.createElement('button');
+    div.type = 'button';
     div.className = 'deck-card';
     div.dataset.cardId = card.id;
+    div.setAttribute('aria-label', `Remover ${card.name} do deck`);
 
     if (card.img) {
         div.style.backgroundImage = `url('${card.img}')`;

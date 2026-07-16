@@ -5,6 +5,7 @@
 import { GAME_SIDES, calculateGameScore } from '../domain/game-state.js';
 import { audioManager } from './audio.js';
 import { enemyTurn } from './ai.js';
+import { closeAccessibleDialog, openAccessibleDialog } from '../ui/accessibility.js';
 import {
     dispatchGameCommand,
     gameState,
@@ -209,16 +210,14 @@ function showGameOverModal() {
         try { audioManager.playSFX('switch'); } catch (e) { console.warn('SFX failed', e); }
     }
 
-    // Mostrar modal
-    modal.classList.remove('hidden');
-
     // Setup botão de jogar novamente
     const playAgainBtn = document.getElementById('play-again-btn');
     playAgainBtn.onclick = () => {
         try { audioManager.playSFX('mouseclick'); } catch (e) { }
-        modal.classList.add('hidden');
+        closeAccessibleDialog(modal);
         resetGame();
     };
+    openAccessibleDialog(modal, playAgainBtn);
 }
 
 /**
@@ -253,8 +252,10 @@ export function disposeGameSession({ stopAudio = false } = {}) {
         ));
 
     document.querySelectorAll('.round-toast').forEach(toast => toast.remove());
-    document.getElementById('mulligan-overlay')?.classList.add('hidden');
-    document.getElementById('game-over-modal')?.classList.add('hidden');
+    ['mulligan-overlay', 'game-over-modal'].forEach(id => {
+        const dialog = document.getElementById(id);
+        if (dialog && !dialog.classList.contains('hidden')) closeAccessibleDialog(dialog);
+    });
 
     const passBtn = document.getElementById('pass-button');
     if (passBtn) {
