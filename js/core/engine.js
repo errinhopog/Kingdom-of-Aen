@@ -12,20 +12,7 @@
  * @param {number} count
  */
 function drawCard(who, count) {
-    for (let i = 0; i < count; i++) {
-        if (who === 'player') {
-            if (playerDeck.length === 0) continue;
-            const drawnCard = playerDeck.shift();
-            const newCard = moveCardInstance(drawnCard, { zone: CARD_ZONES.HAND });
-            document.querySelector('.hand-cards')?.appendChild(createCardElement(newCard));
-            updateDeckCountUI();
-        } else {
-            if (enemyDeck.length === 0) continue;
-            const drawnCard = enemyDeck.shift();
-            enemyHand.push(moveCardInstance(drawnCard, { zone: CARD_ZONES.HAND }));
-            updateEnemyHandUI();
-        }
-    }
+    dispatchGameCommand({ type: 'DRAW_CARD', side: who, count });
 }
 
 /**
@@ -33,74 +20,7 @@ function drawCard(who, count) {
  * @returns {Object} { totalPlayer, totalOpponent }
  */
 function updateScore() {
-    let totalPlayer = 0;
-    let totalOpponent = 0;
-
-    const allRows = document.querySelectorAll('.row');
-
-    allRows.forEach(row => {
-        const cards = Array.from(row.querySelectorAll('.card'));
-
-        // Conta os nomes para resolver vínculos entre parceiros.
-        const nameCounts = {};
-        cards.forEach(card => {
-            const name = card.dataset.name;
-            nameCounts[name] = (nameCounts[name] || 0) + 1;
-        });
-
-        let rowScore = 0;
-
-        cards.forEach(card => {
-            let power = parseInt(card.dataset.basePower);
-            const ability = card.dataset.ability;
-            const isHero = card.dataset.isHero === "true";
-
-            // Aplica vínculo entre parceiros.
-            const partner = card.dataset.partner;
-            if (!isHero && ability === 'bond_partner' && partner) {
-                if (nameCounts[partner] && nameCounts[partner] > 0) {
-                    power *= 2;
-                }
-            }
-
-            // Update Visuals
-            let badge = card.querySelector('.card-strength-badge');
-            if (!badge) {
-                badge = document.createElement('div');
-                badge.classList.add('card-strength-badge');
-                card.appendChild(badge);
-            }
-            badge.textContent = power;
-            if (power > parseInt(card.dataset.basePower)) {
-                badge.classList.add('buffed');
-                badge.classList.remove('nerfed');
-            } else if (power < parseInt(card.dataset.basePower)) {
-                badge.classList.add('nerfed');
-                badge.classList.remove('buffed');
-            } else {
-                badge.classList.remove('buffed', 'nerfed');
-            }
-
-            // Update dataset for other logic
-            card.dataset.power = power;
-
-            rowScore += power;
-        });
-
-        row.querySelector('.row-score').textContent = rowScore;
-
-        if (row.classList.contains('player')) {
-            totalPlayer += rowScore;
-        } else {
-            totalOpponent += rowScore;
-        }
-    });
-
-    // Update Totals
-    document.getElementById('score-total-player').textContent = totalPlayer;
-    document.getElementById('score-total-opponent').textContent = totalOpponent;
-
-    return { totalPlayer, totalOpponent };
+    return calculateGameScore(gameState);
 }
 
 // ============================================
@@ -116,9 +36,7 @@ const ENEMY_EFFECT_SETTLE_MS = 850;
  */
 function passTurn(who) {
     if (who === 'opponent') {
-        enemyPassed = true;
-        document.querySelector('.opponent-side').classList.add('passed');
-        updateTurnVisuals();
+        dispatchGameCommand({ type: 'PASS_SIDE', side: GAME_SIDES.OPPONENT });
         checkEndRound();
     }
 }
@@ -127,26 +45,12 @@ function passTurn(who) {
  * Atualiza os visuais de turno ativo
  */
 function updateTurnVisuals() {
-    const playerSide = document.querySelector('.player-side');
-    const opponentSide = document.querySelector('.opponent-side');
-
-    if (!playerSide || !opponentSide) return;
-
-    playerSide.classList.remove('active-turn');
-    opponentSide.classList.remove('active-turn');
-
-    if (isProcessingTurn && !enemyPassed) {
-        opponentSide.classList.add('active-turn');
-    } else if (!playerPassed) {
-        playerSide.classList.add('active-turn');
-    }
-
+    renderGameState(gameState);
 }
 
 /** Finaliza a ação da IA e devolve o controle ao jogador. */
 function finishEnemyAction() {
-    isProcessingTurn = false;
-    updateTurnVisuals();
+    dispatchGameCommand({ type: 'SET_PROCESSING', value: false });
 }
 
 /**
@@ -157,7 +61,7 @@ function scheduleEnemyAction(continuous) {
     scheduleGameTask(() => {
         enemyTurn();
 
-        if (continuous && !enemyPassed) {
+        if (continuous && !gameState.players.opponent.passed) {
             scheduleEnemyAction(true);
             return;
         }
@@ -171,10 +75,9 @@ function scheduleEnemyAction(continuous) {
  * @param {{continuous?: boolean}} options
  */
 function queueEnemyTurn({ continuous = false } = {}) {
-    if (enemyPassed || isProcessingTurn) return;
+    if (gameState.players.opponent.passed || gameState.processing) return;
 
-    isProcessingTurn = true;
-    updateTurnVisuals();
+    dispatchGameCommand({ type: 'SET_PROCESSING', value: true });
     scheduleEnemyAction(continuous);
 }
 
@@ -191,7 +94,7 @@ function enemyTurnLoop() {
  * Verifica se a rodada terminou (ambos passaram)
  */
 function checkEndRound() {
-    if (playerPassed && enemyPassed) {
+    if (gameState.players.player.passed && gameState.players.opponent.passed) {
         const scores = updateScore();
         scheduleGameTask(() => {
             let winner = "";
@@ -213,26 +116,18 @@ function checkEndRound() {
  */
 function endRound(winner) {
     let message = "";
+    dispatchGameCommand({ type: 'AWARD_ROUND', winner });
     if (winner === "player") {
-        playerWins++;
         message = "Você venceu a rodada!";
-        updateGems("player", playerWins);
 
     } else if (winner === "opponent") {
-        enemyWins++;
         message = "Oponente venceu a rodada!";
-        updateGems("opponent", enemyWins);
     } else {
-        // Draw: Both get a point
-        playerWins++;
-        enemyWins++;
         message = "Empate! Ambos pontuam.";
-        updateGems("player", playerWins);
-        updateGems("opponent", enemyWins);
     }
 
     // Verificar se a partida acabou
-    if (playerWins >= 2 || enemyWins >= 2) {
+    if (gameState.players.player.wins >= 2 || gameState.players.opponent.wins >= 2) {
         showGameOverModal();
     } else {
         showRoundMessage(message);
@@ -278,16 +173,16 @@ function showGameOverModal() {
     const enemyScore = document.getElementById('final-enemy-wins');
 
     // Atualizar placar
-    playerScore.textContent = playerWins;
-    enemyScore.textContent = enemyWins;
+    playerScore.textContent = gameState.players.player.wins;
+    enemyScore.textContent = gameState.players.opponent.wins;
 
     // Determinar resultado
-    if (playerWins >= 2 && enemyWins >= 2) {
+    if (gameState.players.player.wins >= 2 && gameState.players.opponent.wins >= 2) {
         title.textContent = "EMPATE!";
         title.className = "modal-title draw";
         subtitle.textContent = "Uma batalha digna de lendas!";
         icon.textContent = "⚖️";
-    } else if (playerWins >= 2) {
+    } else if (gameState.players.player.wins >= 2) {
         title.textContent = "VITÓRIA!";
         title.className = "modal-title victory";
         subtitle.textContent = "Você dominou o campo de batalha!";
@@ -382,6 +277,7 @@ function updateGems(who, count) {
     const container = document.getElementById(containerId);
     const gems = container.querySelectorAll('.gem');
 
+    gems.forEach(gem => gem.classList.remove('active'));
     for (let i = 0; i < count; i++) {
         if (gems[i]) gems[i].classList.add('active');
     }
@@ -391,31 +287,9 @@ function updateGems(who, count) {
  * Prepara a próxima rodada
  */
 function prepareNextRound() {
-    // 1. Remove as unidades da rodada encerrada.
-    const allRows = document.querySelectorAll('.row .cards-container');
-    allRows.forEach(container => { container.innerHTML = ''; });
-
-    // 2. Reset States
-    playerPassed = false;
-    enemyPassed = false;
-    isProcessingTurn = false;
-    document.querySelector('.player-side').classList.remove('passed');
-    document.querySelector('.opponent-side').classList.remove('passed');
-    updateTurnVisuals();
-
-    // 3. Reset UI Controls
-    const passBtn = document.getElementById('pass-button');
-    passBtn.disabled = false;
-    passBtn.textContent = "Passar Rodada";
-
-    // 4. Draw 1 Card for Player
+    dispatchGameCommand({ type: 'RESET_ROUND' });
     drawCard('player', 1);
-
-    // 5. Draw 1 Card for Enemy
     drawCard('opponent', 1);
-
-    // 6. Update Scores (to 0)
-    updateScore();
 
     alert("Nova Rodada Iniciada! +1 Carta para cada.");
 }

@@ -82,12 +82,14 @@ function loadLifecycleHarness() {
     vm.createContext(context);
 
     const source = [
+        fs.readFileSync(path.join(root, 'js/domain/card.js'), 'utf8'),
+        fs.readFileSync(path.join(root, 'js/domain/game-state.js'), 'utf8'),
         fs.readFileSync(path.join(root, 'js/core/state.js'), 'utf8'),
         fs.readFileSync(path.join(root, 'js/core/engine.js'), 'utf8'),
         `globalThis.lifecycle = {
             cancelPendingGameTasks,
             disposeGameSession,
-            isProcessing: () => isProcessingTurn,
+            isProcessing: () => gameState.processing,
             pendingGameTimers,
             queueEnemyTurn,
             scheduleGameTask

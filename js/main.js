@@ -6,20 +6,8 @@
  * Inicializa o jogo com o sistema antigo (sem deck builder)
  */
 function initializeGame() {
-    renderHand();
-    // Initialize Enemy Hand with random cards from DB
-    enemyHand = [];
-    for (let i = 0; i < 10; i++) {
-        const definition = allCardsData[Math.floor(Math.random() * allCardsData.length)];
-        enemyHand.push(createCardInstance(definition, {
-            ownerId: 'opponent',
-            zone: CARD_ZONES.HAND
-        }));
-    }
-
-    updateScore();
-    updateEnemyHandUI();
-    updateTurnVisuals();
+    const defaultIds = CARD_COLLECTION.slice(0, 22).map(card => card.id);
+    initializeGameWithDeck(defaultIds);
 }
 
 /**
@@ -30,51 +18,19 @@ function initializeGameWithDeck(deckIds) {
     console.log("=== INICIANDO JOGO COM DECK ===");
     console.log("Deck IDs:", deckIds);
 
-    // 1. Converter IDs para objetos de carta e embaralhar
-    let convertedPlayerCards = [];
-    if (typeof idsToCards === 'function') {
-        convertedPlayerCards = idsToCards(deckIds, 'player');
-    } else {
-        convertedPlayerCards = deckIds
-            .map(id => allCardsData.find(card => card.id === id))
-            .filter(Boolean)
-            .map(definition => createCardInstance(definition, { ownerId: 'player' }));
-        console.warn('[DEBUG initializeGameWithDeck] idsToCards() not found — using fallback mapping.');
-    }
-    playerDeck = shuffleArray(convertedPlayerCards || []);
-    console.log("Deck embaralhado (player):", playerDeck.length, "cartas");
+    const playerCards = shuffleArray(idsToCards(deckIds, GAME_SIDES.PLAYER));
+    const enemyDeckIds = CARD_COLLECTION.map(card => card.id);
+    const opponentCards = shuffleArray(idsToCards(enemyDeckIds, GAME_SIDES.OPPONENT));
 
-    // 2. Criar deck do inimigo
-    const sourceCollection = (typeof CARD_COLLECTION !== 'undefined') ? CARD_COLLECTION : allCardsData;
-    if (typeof CARD_COLLECTION === 'undefined') {
-        console.warn('[DEBUG initializeGameWithDeck] CARD_COLLECTION not defined — falling back to allCardsData for enemy deck.');
-    }
-    const enemyDeckIds = (sourceCollection || [])
-        .filter(c => c.category === 'unit')
-        .map(c => c.id);
+    dispatchGameCommand({
+        type: 'INITIALIZE_GAME',
+        playerDeck: playerCards,
+        opponentDeck: opponentCards
+    });
 
-    let convertedEnemyCards = [];
-    if (typeof idsToCards === 'function') {
-        convertedEnemyCards = idsToCards(enemyDeckIds, 'opponent');
-    } else {
-        convertedEnemyCards = enemyDeckIds
-            .map(id => (sourceCollection || allCardsData).find(card => card.id === id))
-            .filter(Boolean)
-            .map(definition => createCardInstance(definition, { ownerId: 'opponent' }));
-    }
-    enemyDeck = shuffleArray(convertedEnemyCards || []);
-    console.log("Deck inimigo (built):", enemyDeck.length, "cartas");
-
-    // 3. Comprar 10 cartas para a mão do jogador
-    const playerStartingHand = playerDeck.splice(0, 10);
-
-    // 4. Comprar 10 cartas para a mão do inimigo
-    enemyHand = enemyDeck.splice(0, 10)
-        .map(card => moveCardInstance(card, { zone: CARD_ZONES.HAND }));
-    console.log('[DEBUG initializeGameWithDeck] enemyHand length after draw:', enemyHand.length);
-
-    // 5. INICIAR FASE DE MULLIGAN
-    startMulligan(playerStartingHand);
+    console.log("Deck embaralhado (player):", playerCards.length, "cartas");
+    console.log("Deck inimigo (built):", opponentCards.length, "cartas");
+    startMulligan();
 
     console.log("=== AGUARDANDO MULLIGAN ===");
 }
@@ -90,22 +46,16 @@ function setupControls() {
     const passBtn = document.getElementById('pass-button');
     if (passBtn) {
         passBtn.addEventListener('click', () => {
-            if (playerPassed || isProcessingTurn) return;
+            if (gameState.players.player.passed || gameState.processing) return;
 
-            playerPassed = true;
-            passBtn.disabled = true;
-            passBtn.textContent = "Passado";
+            dispatchGameCommand({ type: 'PASS_SIDE', side: GAME_SIDES.PLAYER });
             console.log("Jogador passou a vez.");
-
-            // Visual update
-            document.querySelector('.player-side').classList.add('passed');
-            updateTurnVisuals();
 
             // Play button SFX
             try { audioManager.playSFX('switch'); } catch (e) { console.warn('SFX failed', e); }
 
             // If player passes, enemy plays until they win or pass
-            if (!enemyPassed) {
+            if (!gameState.players.opponent.passed) {
                 enemyTurnLoop();
             } else {
                 checkEndRound();

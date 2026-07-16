@@ -24,10 +24,11 @@ Depois acesse `http://localhost:8080`.
 | --- | --- |
 | Adicionar cartas | `js/data/cards.js` |
 | Ajustar modelo de carta | `js/domain/card.js` |
+| Ajustar estado ou comando | `js/domain/game-state.js` |
 | Ajustar regra de deck | `js/data/cards.js`, `js/deckbuilder.js` |
-| Ajustar habilidade do MVP | `js/core/engine.js`, `js/utils/helpers.js`, `js/core/ai.js` |
+| Ajustar habilidade do MVP | `js/domain/game-state.js`, `js/utils/helpers.js`, `js/core/ai.js` |
 | Ajustar IA | `js/core/ai.js` |
-| Ajustar pontuacao | `js/core/engine.js` |
+| Ajustar pontuacao | `js/domain/game-state.js` |
 | Ajustar visual das cartas | `js/ui/render.js`, `css/style.css` |
 | Ajustar deck builder | `js/deckbuilder.js`, `css/style.css` |
 | Ajustar audio | `js/core/audio.js`, `audio/` |
@@ -118,4 +119,6 @@ JSON.parse(localStorage.getItem('kingdomOfAen_playerDeck') || '[]')
 - Evite criar novas globais quando uma funcao existente ja cobre o fluxo.
 - Sempre verifique caminhos de imagens e audios.
 - Nao adicione uma habilidade aos dados antes de sua regra estar implementada e testada.
+- Nao consulte `document` ou `dataset` em `js/domain/` ou nas decisoes da IA.
+- Toda transicao de jogo deve ser representada por um comando de `gameReducer()`.
 - Se uma regra muda a pontuacao, revise `updateScore()`.

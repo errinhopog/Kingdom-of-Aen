@@ -2,37 +2,63 @@
 // ===       RENDERIZAÇÃO DE ELEMENTOS     ===
 // ============================================
 
-/**
- * Renderiza a mão do jogador usando allCardsData
- */
-function renderHand() {
-    const handContainer = document.querySelector('.hand-cards');
-    if (!handContainer) return;
+/** Reconstrói toda a interface de batalha exclusivamente a partir do GameState. */
+function renderGameState(state) {
+    document.querySelectorAll('.row .cards-container, .hand-cards')
+        .forEach(container => { container.innerHTML = ''; });
 
-    handContainer.innerHTML = '';
+    if (state.phase === 'battle') {
+        const handContainer = document.querySelector('.hand-cards');
+        state.players.player.hand.forEach(card => {
+            handContainer?.appendChild(createCardElement(card));
+        });
+    }
 
-    allCardsData.forEach(definition => {
-        const card = createCardInstance(definition, { ownerId: 'player', zone: CARD_ZONES.HAND });
-        const cardElement = createCardElement(card);
-        handContainer.appendChild(cardElement);
+    [GAME_SIDES.PLAYER, GAME_SIDES.OPPONENT].forEach(sideId => {
+        GAME_ROWS.forEach(row => {
+            const container = document.querySelector(`.row.${sideId}[data-type="${row}"] .cards-container`);
+            state.players[sideId].board[row].forEach(card => {
+                const element = createCardElement(card);
+                element.draggable = false;
+                container?.appendChild(element);
+            });
+        });
     });
-}
 
-/**
- * Renderiza a mão do jogador a partir de um array de cartas
- * @param {Array} cards - Array de objetos de carta
- */
-function renderHandFromCards(cards) {
-    const handContainer = document.querySelector('.hand-cards');
-    if (!handContainer) return;
-
-    handContainer.innerHTML = '';
-
-    cards.forEach(card => {
-        const handCard = moveCardInstance(card, { zone: CARD_ZONES.HAND });
-        const cardElement = createCardElement(handCard);
-        handContainer.appendChild(cardElement);
+    const scores = calculateGameScore(state);
+    [GAME_SIDES.PLAYER, GAME_SIDES.OPPONENT].forEach(sideId => {
+        GAME_ROWS.forEach(row => {
+            const score = document.querySelector(`.row.${sideId}[data-type="${row}"] .row-score`);
+            if (score) score.textContent = scores.rows[sideId][row];
+        });
     });
+
+    const totals = {
+        'score-total-player': scores.totalPlayer,
+        'score-total-opponent': scores.totalOpponent,
+        'enemy-hand-count': state.players.opponent.hand.length,
+        'player-deck-count': state.players.player.deck.length
+    };
+    Object.entries(totals).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    });
+
+    const playerSide = document.querySelector('.player-side');
+    const opponentSide = document.querySelector('.opponent-side');
+    playerSide?.classList.toggle('passed', state.players.player.passed);
+    opponentSide?.classList.toggle('passed', state.players.opponent.passed);
+    playerSide?.classList.toggle('active-turn', !state.processing && !state.players.player.passed);
+    opponentSide?.classList.toggle('active-turn', state.processing && !state.players.opponent.passed);
+
+    const passButton = document.getElementById('pass-button');
+    if (passButton) {
+        passButton.disabled = state.processing || state.players.player.passed;
+        passButton.textContent = state.players.player.passed ? 'Passado' : 'Passar Rodada';
+    }
+
+    updateGems('player', state.players.player.wins);
+    updateGems('opponent', state.players.opponent.wins);
 }
 
 /**
@@ -41,7 +67,7 @@ function renderHandFromCards(cards) {
 function updateEnemyHandUI() {
     const el = document.getElementById('enemy-hand-count');
     if (el) {
-        el.textContent = enemyHand.length;
+        el.textContent = gameState.players.opponent.hand.length;
     }
 }
 
@@ -51,7 +77,7 @@ function updateEnemyHandUI() {
 function updateDeckCountUI() {
     const deckCountEl = document.getElementById('player-deck-count');
     if (deckCountEl) {
-        deckCountEl.textContent = playerDeck.length;
+        deckCountEl.textContent = gameState.players.player.deck.length;
     }
 }
 

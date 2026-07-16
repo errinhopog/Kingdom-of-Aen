@@ -4,20 +4,14 @@
 
 /**
  * Inicia a fase de mulligan (troca de cartas)
- * @param {Array} playerHand - Mão inicial do jogador
  */
-function startMulligan(playerHand) {
+function startMulligan() {
     console.log("[Mulligan] Iniciando fase de troca...");
-
-    // Resetar estado
-    mulliganHand = playerHand
-        .map(card => moveCardInstance(card, { zone: CARD_ZONES.MULLIGAN }));
-    mulliganRedraws = 2;
 
     // Atualizar contador na UI
     const redrawCountEl = document.getElementById('redraw-count');
     if (redrawCountEl) {
-        redrawCountEl.textContent = mulliganRedraws;
+        redrawCountEl.textContent = gameState.mulliganRedraws;
         redrawCountEl.classList.remove('exhausted');
     }
 
@@ -49,7 +43,7 @@ function renderMulliganCards() {
 
     container.innerHTML = '';
 
-    mulliganHand.forEach((card, index) => {
+    gameState.players.player.hand.forEach((card, index) => {
         const cardEl = createMulliganCardElement(card, index);
         container.appendChild(cardEl);
     });
@@ -109,7 +103,7 @@ function createMulliganCardElement(card, index) {
     el.addEventListener('click', () => redrawCard(index));
 
     // Disable if no redraws left
-    if (mulliganRedraws <= 0) {
+    if (gameState.mulliganRedraws <= 0) {
         el.classList.add('disabled');
     }
 
@@ -122,41 +116,28 @@ function createMulliganCardElement(card, index) {
  */
 function redrawCard(index) {
     // Verificar se ainda pode trocar
-    if (mulliganRedraws <= 0) {
+    if (gameState.mulliganRedraws <= 0) {
         console.log("[Mulligan] Sem trocas restantes!");
         return;
     }
 
     // Verificar se o deck tem cartas
-    if (playerDeck.length === 0) {
+    if (gameState.players.player.deck.length === 0) {
         console.log("[Mulligan] Deck vazio!");
         return;
     }
 
-    const oldCard = mulliganHand[index];
+    const oldCard = gameState.players.player.hand[index];
     console.log(`[Mulligan] Trocando carta: ${oldCard.name}`);
 
-    // 1. Devolver carta antiga ao deck
-    playerDeck.push(moveCardInstance(oldCard, { zone: CARD_ZONES.DECK }));
-
-    // 2. Embaralhar o deck
-    playerDeck = shuffleArray(playerDeck);
-
-    // 3. Comprar nova carta do topo
-    const newCard = playerDeck.shift();
-    const newCardWithId = moveCardInstance(newCard, { zone: CARD_ZONES.MULLIGAN });
-
-    // 4. Substituir na mão
-    mulliganHand[index] = newCardWithId;
-
-    // 5. Decrementar contador
-    mulliganRedraws--;
+    dispatchGameCommand({ type: 'MULLIGAN_REDRAW', handIndex: index }, { render: false });
+    const newCardWithId = gameState.players.player.hand[index];
 
     // 6. Atualizar UI
     const redrawCountEl = document.getElementById('redraw-count');
     if (redrawCountEl) {
-        redrawCountEl.textContent = mulliganRedraws;
-        if (mulliganRedraws <= 0) {
+        redrawCountEl.textContent = gameState.mulliganRedraws;
+        if (gameState.mulliganRedraws <= 0) {
             redrawCountEl.classList.add('exhausted');
         }
     }
@@ -177,7 +158,7 @@ function redrawCard(index) {
     }
 
     // 8. Desabilitar todas as cartas se não houver mais trocas
-    if (mulliganRedraws <= 0) {
+    if (gameState.mulliganRedraws <= 0) {
         scheduleGameTask(() => {
             const allCards = container.querySelectorAll('.mulligan-card');
             allCards.forEach(card => {
@@ -191,7 +172,7 @@ function redrawCard(index) {
     // 9. Tocar SFX
     try { audioManager.playSFX('card-slide'); } catch (e) { console.warn('SFX failed', e); }
 
-    console.log(`[Mulligan] Nova carta: ${newCardWithId.name}. Trocas restantes: ${mulliganRedraws}`);
+    console.log(`[Mulligan] Nova carta: ${newCardWithId.name}. Trocas restantes: ${gameState.mulliganRedraws}`);
 }
 
 /**
@@ -206,14 +187,8 @@ function finishMulligan() {
         overlay.classList.add('hidden');
     }
 
-    // 2. Renderizar mão final no rodapé
-    renderHandFromCards(mulliganHand);
-
-    // 3. Atualizar UI
-    updateScore();
-    updateEnemyHandUI();
-    updateDeckCountUI();
-    updateTurnVisuals();
+    // 2. Entrar na batalha e reconstruir a UI a partir do estado.
+    dispatchGameCommand({ type: 'START_BATTLE' });
 
     // 4. Iniciar música de batalha
     try { audioManager.playMusic(); } catch (e) { console.warn('Music failed', e); }

@@ -102,6 +102,12 @@ if (missingAudio.length) {
     errors.push(`Audios referenciados ausentes: ${missingAudio.join(', ')}`);
 }
 
+const domainFiles = ['js/domain/card.js', 'js/domain/game-state.js', 'js/core/ai.js'];
+const domainDomAccess = domainFiles.filter(relativePath => /\b(?:document|dataset)\b/.test(read(relativePath)));
+if (domainDomAccess.length) {
+    errors.push(`Dominio ou IA consultando DOM: ${domainDomAccess.join(', ')}`);
+}
+
 if (cards.length === 0) {
     errors.push('CARD_COLLECTION esta vazia.');
 }
