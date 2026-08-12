@@ -88,7 +88,7 @@ Documentacao tecnica e de produto em `docs/`:
 
 ## Observacoes Importantes
 
-- Algumas cartas e todos os lideres apontam para `assets/*.png`, mas essa pasta nao existe. O jogo continua funcionando com o visual de fallback (sem arte real). Lista completa em [Assets](docs/ASSETS.md).
+- As 15 ilustracoes unicas de `assets/*.png` foram adicionadas; elas resolvem as 26 referencias antes ausentes em cartas e lideres. Inventario em [Assets](docs/ASSETS.md).
 - Algumas habilidades ja estao implementadas no motor (`weather_*`, `scorch`, `spy`, `tight_bond`), mas ainda nao existem cartas usando-as na colecao atual. Detalhes em [Regras e Sistemas](docs/GAME_RULES.md).
 - O modo online ainda e um plano. Hoje so existe single-player vs IA. Veja [docs/MULTIPLAYER.md](docs/MULTIPLAYER.md).
 
@@ -105,5 +105,5 @@ node scripts/validate-project.js
 ```
 
 O comando valida o catálogo e informa referências de imagem ausentes. Para tratar os
-avisos como falhas em uma auditoria de assets, acrescente `--strict`. Atualmente essa
-auditoria acusa as ilustrações ainda não versionadas no repositório.
+avisos como falhas em uma auditoria de assets, acrescente `--strict`. O CI executa
+essa forma estrita para impedir novas referencias quebradas.
