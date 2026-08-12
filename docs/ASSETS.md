@@ -6,12 +6,13 @@ Este documento registra os assets usados e as lacunas encontradas na revisao atu
 
 ```text
 audio/
+assets/
 img/
 ├── icons/
 └── personagens/
 ```
 
-Nao existe uma pasta `assets/` no repositorio atual, mas varias cartas e lideres apontam para ela.
+A pasta `assets/` contem as novas ilustracoes geradas para as cartas e lideres que antes usavam fallback.
 
 ## Imagens Existentes
 
@@ -43,9 +44,9 @@ Personagens existentes, mas ainda nao referenciados diretamente na colecao atual
 - `img/personagens/Paty.png`
 - `img/personagens/Renata.png`
 
-## Referencias Ausentes
+## Ilustracoes Adicionadas
 
-As seguintes referencias aparecem no codigo, mas os arquivos nao existem:
+As 15 imagens abaixo resolvem 26 referencias do catalogo, pois varias cartas compartilham a mesma arte:
 
 - `assets/anderson.png`
 - `assets/clarice.png`
@@ -91,9 +92,8 @@ Esse arquivo parece ser uma copia da musica de fundo e pode ser removido ou docu
 
 ## Convencoes Recomendadas
 
-- Usar `img/personagens/` para artes de cartas.
+- Manter `assets/` para as artes novas ja referenciadas pelo catalogo e `img/personagens/` para o acervo original.
 - Usar `img/icons/` para icones de fileira e UI.
-- Evitar caminhos novos em `assets/` enquanto a pasta nao existir.
 - Preferir nomes sem acentos em novos arquivos para reduzir risco em sistemas diferentes.
 - Manter o caminho do `img` igual ao valor usado em `CARD_COLLECTION`.
 - Ao renomear uma imagem, atualizar `js/data/cards.js` na mesma mudanca.
