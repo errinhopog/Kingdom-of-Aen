@@ -95,3 +95,15 @@ Documentacao tecnica e de produto em `docs/`:
 ## Autoria
 
 Desenvolvido por Pedro Braga e Ramon.
+
+## Verificacao
+
+Antes de publicar mudanças nas cartas ou nos assets, execute:
+
+```bash
+node scripts/validate-project.js
+```
+
+O comando valida o catálogo e informa referências de imagem ausentes. Para tratar os
+avisos como falhas em uma auditoria de assets, acrescente `--strict`. Atualmente essa
+auditoria acusa as ilustrações ainda não versionadas no repositório.
